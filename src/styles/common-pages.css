@@ -1,0 +1,430 @@
+/* =====================
+   COMMON PAGE LAYOUT
+===================== */
+.common-page-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 24px;
+  align-items: start;
+  padding: 20px 0 40px;
+}
+
+/* =====================
+   FILTER SIDEBAR
+===================== */
+.filter-sidebar {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  position: sticky;
+  top: 90px;
+}
+
+.filter-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.filter-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111;
+}
+
+.filter-clear {
+  font-size: 12px;
+  color: #4A90D9;
+  cursor: pointer;
+  font-weight: 500;
+  background: none;
+  border: none;
+  font-family: 'Poppins', sans-serif;
+}
+
+.filter-section {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.filter-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.filter-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+/* Gender Filter */
+.filter-gender {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.filter-gender-btn {
+  padding: 8px;
+  border-radius: 10px;
+  border: 1.5px solid #ddd;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.filter-gender-btn.active {
+  border-color: #4A90D9;
+  background: #4A90D9;
+  color: #fff;
+}
+
+/* Price Filter */
+.filter-price-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.filter-checkbox-item input {
+  width: 16px;
+  height: 16px;
+  accent-color: #4A90D9;
+  cursor: pointer;
+}
+
+.filter-checkbox-label {
+  font-size: 13px;
+  color: #444;
+}
+
+/* Category Filter */
+.filter-category-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Brand Filter */
+.filter-brand-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.filter-brand-options::-webkit-scrollbar {
+  width: 4px;
+}
+
+.filter-brand-options::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 4px;
+}
+
+/* Size Filter */
+.filter-size-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-size-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #ddd;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.2s;
+}
+
+.filter-size-btn.active {
+  border-color: #4A90D9;
+  background: #4A90D9;
+  color: #fff;
+}
+
+/* Color Filter */
+.filter-color-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-color-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-color-btn.active {
+  border-color: #4A90D9;
+  transform: scale(1.2);
+}
+
+/* Rating Filter */
+.filter-rating-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-rating-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.filter-rating-stars {
+  color: #F5A623;
+  font-size: 13px;
+}
+
+.filter-rating-label {
+  font-size: 12px;
+  color: #666;
+}
+
+/* Apply Filter Button */
+.filter-apply-btn {
+  width: 100%;
+  padding: 12px;
+  background: #4A90D9;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: opacity 0.2s;
+}
+
+.filter-apply-btn:hover { opacity: 0.85; }
+
+/* =====================
+   PRODUCTS SECTION
+===================== */
+.products-section { flex: 1; }
+
+.products-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.products-count {
+  font-size: 14px;
+  color: #222222;
+  font-weight: 500;
+}
+
+.products-count span {
+  color: #111;
+  font-weight: 700;
+}
+
+.sort-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sort-label {
+  font-size: 13px;
+  color: #222222;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.sort-select {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1.5px solid #ddd;
+  font-size: 13px;
+  font-family: 'Poppins', sans-serif;
+  color: #333;
+  background: #fff;
+  cursor: pointer;
+  outline: none;
+}
+
+.common-product-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+/* =====================
+   MOBILE FILTER TOGGLE
+===================== */
+.filter-toggle-btn {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: #fff;
+  border: 1.5px solid #ddd;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Poppins', sans-serif;
+  color: #333;
+  cursor: pointer;
+}
+
+.filter-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 200;
+}
+
+.filter-overlay.open { display: block; }
+/* Make the whole layout fixed height so both sides scroll independently */
+.common-page-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 24px;
+  align-items: start;
+  height: calc(100vh - 140px); /* adjust 140px based on your navbar height */
+}
+
+/* Filter sidebar gets its own scroll */
+.filter-sidebar {
+  height: calc(100vh - 140px);
+  overflow-y: auto;
+  position: sticky;
+  top: 80px; /* your navbar height */
+  scrollbar-width: thin;
+  scrollbar-color: #ddd transparent;
+}
+
+.filter-sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.filter-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.filter-sidebar::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 4px;
+}
+
+/* Products section gets its own scroll */
+.products-section {
+  height: calc(100vh - 140px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #ddd transparent;
+}
+
+.products-section::-webkit-scrollbar {
+  width: 4px;
+}
+
+.products-section::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.products-section::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 4px;
+}
+
+/* =====================
+   TABLET — 1024px
+===================== */
+@media (max-width: 1024px) {
+  .common-page-layout {
+    grid-template-columns: 220px 1fr;
+    gap: 16px;
+  }
+
+  .common-product-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* =====================
+   MOBILE — 768px
+===================== */
+@media (max-width: 768px) {
+  .common-page-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-sidebar {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    z-index: 300;
+    border-radius: 0;
+    overflow-y: auto;
+    transition: transform 0.3s;
+  }
+
+  .filter-sidebar.open {
+    display: block;
+  }
+
+  .filter-toggle-btn {
+    display: flex;
+  }
+
+  .common-product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .products-top {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+}
+
+/* =====================
+   SMALL MOBILE — 480px
+===================== */
+@media (max-width: 480px) {
+  .common-product-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}

@@ -1,0 +1,328 @@
+import { useNavigate } from 'react-router-dom'
+import Navbar from '../components/navbar'
+import '../styles/common.css'
+import '../styles/categories.css'
+
+export default function Categories() {
+  const navigate = useNavigate()
+
+  const mainCategories = [
+    {
+      id: 1,
+      title: "Men's Fashion",
+      desc: 'Shirts, Tees, Jeans, Kurtas & more',
+      count: '1,240 items',
+      path: '/common/men',
+      bg: 'linear-gradient(135deg, #1565C0, #42a5f5)',
+      img: '/image/men/jeans/p5.jpg',
+    },
+    {
+      id: 2,
+      title: "Women's Fashion",
+      desc: 'Dresses, Kurtas, Sarees, Tops & more',
+      count: '2,340 items',
+      path: '/common/women',
+      bg: 'linear-gradient(135deg, #E91E8C, #f472b6)',
+      img: '/image/women/dress/d13.jpg',
+    },
+    {
+      id: 3,
+      title: 'Footwear',
+      desc: 'Sneakers, Heels, Sports, Formals & more',
+      count: '980 items',
+      path: '/common/footwear',
+      bg: 'linear-gradient(135deg, #1b5e20, #388e3c)',
+      img: '/image/footwear/men/sneakers/d2.jpg',
+    },
+    {
+      id: 4,
+      title: 'Accessories',
+      desc: 'Watches, Bags, Jewellery, Belts & more',
+      count: '760 items',
+      path: '/common/accessories',
+      bg: 'linear-gradient(135deg, #e65100, #f57c00)',
+      img: '/image/accessories/men/watch/d3.jpg',
+    },
+  ]
+
+  const saleBanners = [
+    {
+      id: 1,
+      label: 'Up to 50% Off',
+      desc: 'On selected fashion',
+      bg: 'linear-gradient(135deg, #1565C0, #42a5f5)',
+      path: '/products/flash-sale?discount=Up to 50%',
+    },
+    {
+      id: 2,
+      label: 'Up to 60% Off',
+      desc: 'On top brands',
+      bg: 'linear-gradient(135deg, #E91E8C, #f472b6)',
+      path: '/products/flash-sale?discount=Up to 60%',
+    },
+    {
+      id: 3,
+      label: 'Up to 70% Off',
+      desc: 'Flash deals today',
+      bg: 'linear-gradient(135deg, #b71c1c, #e53935)',
+      path: '/products/flash-sale?discount=Up to 70%',
+    },
+  ]
+
+  
+  const dealsOfDay = [
+    { id: 1, name: 'Formal Blazer', price: '₹1,999', originalPrice: '₹3,999', discount: '50%', rating: 4.7, img: '/image/men/suit/d1.jpg' },
+    { id: 2, name: 'Silk Saree', price: '₹2,499', originalPrice: '₹4,999', discount: '50%', rating: 4.6, img: '/image/women/saree/d1.jpg' },
+    { id: 3, name: 'Running Shoes', price: '₹1,499', originalPrice: '₹2,999', discount: '50%', rating: 4.5, img: '/image/footwear/men/sneakers/d4.jpg' },
+    { id: 4, name: 'Leather Watch', price: '₹1,999', originalPrice: '₹3,999', discount: '50%', rating: 4.8, img: '/image/accessories/men/watch/d3.jpg' },
+  ]
+
+  const newArrivals = [
+    { id: 1, name: 'Oversized Hoodie', price: '₹1,299', rating: 4.5, img: '/image/men/oversized/d1.jpg' },
+    { id: 2, name: 'Floral Midi Dress', price: '₹1,499', rating: 4.6, img: '/image/women/dress/d1.jpg' },
+    { id: 3, name: 'Chunky Sneakers', price: '₹2,199', rating: 4.7, img: '/image/footwear/women/sneakers/d1.jpg' },
+    { id: 4, name: 'Leather Tote Bag', price: '₹1,799', rating: 4.4, img: '/image/accessories/women/bags/d1.jpg' },
+  ]
+
+  const mostPopular = [
+    { id: 1, name: 'Classic White Tee', price: '₹899', likes: '2.4k', tag: 'Hot', tagColor: '#F5A623', img: '/image/men/t-shirt/t2.jpg' },
+    { id: 2, name: 'Boho Maxi Dress', price: '₹1,799', likes: '1.8k', tag: 'Trending', tagColor: '#E91E8C', img: '/image/women/dress/d3.jpg' },
+    { id: 3, name: 'Air Max Sneakers', price: '₹2,499', likes: '3.1k', tag: 'Popular', tagColor: '#00897B', img: '/image/footwear/men/sneakers/d2.jpg' },
+    { id: 4, name: 'Leather Watch', price: '₹1,999', likes: '3.2k', tag: 'New', tagColor: '#4A90D9', img: '/image/accessories/men/watch/d3.jpg' },
+  ]
+
+  const justForYou = [
+    { id: 1, name: 'Summer Kurta', price: '₹899', img: '/image/women/kurta/d2.jpg' },
+    { id: 2, name: 'Slim Fit Chinos', price: '₹1,199', img: '/image/men/jeans/p3.jpg' },
+    { id: 3, name: 'Canvas Sneakers', price: '₹1,499', img: '/image/footwear/men/sneakers/d3.jpg' },
+    { id: 4, name: 'Crossbody Bag', price: '₹1,299', img: '/image/accessories/women/bags/d2.jpg' },
+  ]
+
+  return (
+    <div className="page">
+      <Navbar active="categories" />
+
+      <div className="wrapper">
+
+        {/* Header */}
+        <div className="page-header">
+          <h1 className="page-title">All Categories</h1>
+        </div>
+
+        {/* Main Categories */}
+        <div className="section-header">
+          <h2 className="section-title">Shop by Category</h2>
+        </div>
+        <div className="cat-main-grid">
+          {mainCategories.map(cat => (
+            <div
+              key={cat.id}
+              className="cat-main-card"
+              style={{ background: cat.bg }}
+              onClick={() => navigate(cat.path)}
+            >
+              <div className="cat-main-img">
+                <img src={cat.img} alt={cat.title} />
+              </div>
+              <div className="cat-main-info">
+                <div className="cat-main-title">{cat.title}</div>
+                <div className="cat-main-desc">{cat.desc}</div>
+                <div className="cat-main-count">{cat.count}</div>
+                <button className="cat-main-btn">Shop Now →</button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="divider" />
+
+        {/* Summer Sale Banner */}
+        <div
+          className="summer-sale-banner"
+          onClick={() => navigate('/products/summer-special')}
+        >
+          <div className="summer-sale-text">
+            <div className="summer-sale-tag">☀️ Limited Time</div>
+            <div className="summer-sale-title">Summer Sale</div>
+            <div className="summer-sale-desc">Biggest sale of the season — shop now before it ends!</div>
+            <button className="summer-sale-btn">Shop Now →</button>
+          </div>
+          <div className="summer-sale-img">
+            <img src="/image/sale/summer.jpg" alt="summer sale" />
+          </div>
+        </div>
+
+        {/* Flash Sale */}
+        <div className="divider" />
+
+        <div className="section-header">
+          <h2 className="section-title">⚡ Flash Sale</h2>
+          <span className="see-all" onClick={() => navigate('/products/flash-sale')}>
+            See All <span className="see-all-arrow">→</span>
+          </span>
+        </div>
+        <div className="sale-banner-grid">
+          {saleBanners.map(b => (
+            <div
+              key={b.id}
+              className="sale-banner-card"
+              style={{ background: b.bg }}
+              onClick={() => navigate(b.path)}
+            >
+              <div className="sale-banner-label">{b.label}</div>
+              <div className="sale-banner-desc">{b.desc}</div>
+              <button className="sale-banner-btn">Shop Now →</button>
+            </div>
+          ))}
+        </div>
+
+       {/* Section Cards Grid */}
+        <div className="divider" />
+        <div className="section-header">
+          <h2 className="section-title">Explore More</h2>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '8px' }}>
+
+          {/* Deals of the Day */}
+          <div
+            onClick={() => navigate('/products/deals')}
+            style={{
+              background: 'linear-gradient(135deg, #e65100, #f57c00)',
+              borderRadius: '20px', padding: '32px 36px',
+              cursor: 'pointer', position: 'relative',
+              overflow: 'hidden', minHeight: '160px',
+              display: 'flex', flexDirection: 'column', justifyContent: 'center',
+              transition: 'transform 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            <div style={{ fontSize: '32px', marginBottom: '8px' }}>⏰</div>
+            <div style={{ fontSize: '22px', fontWeight: '800', color: '#fff', marginBottom: '6px' }}>Deals of the Day</div>
+            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', marginBottom: '16px' }}>Special discounts refreshed every day</div>
+            <button style={{ background: 'rgba(255,255,255,0.25)', border: '1.5px solid rgba(255,255,255,0.5)', color: '#fff', borderRadius: '10px', padding: '8px 18px', fontSize: '12px', fontWeight: '600', fontFamily: "'Poppins', sans-serif", cursor: 'pointer', width: 'fit-content' }}>
+              Shop Now →
+            </button>
+          </div>
+
+          {/* New Arrivals */}
+          <div
+            onClick={() => navigate('/products/new')}
+            style={{
+              background: 'linear-gradient(135deg, #1565C0, #42a5f5)',
+              borderRadius: '20px', padding: '32px 36px',
+              cursor: 'pointer', position: 'relative',
+              overflow: 'hidden', minHeight: '160px',
+              display: 'flex', flexDirection: 'column', justifyContent: 'center',
+              transition: 'transform 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            <div style={{ fontSize: '32px', marginBottom: '8px' }}>✨</div>
+            <div style={{ fontSize: '22px', fontWeight: '800', color: '#fff', marginBottom: '6px' }}>New Arrivals</div>
+            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', marginBottom: '16px' }}>Brand new styles added daily</div>
+            <button style={{ background: 'rgba(255,255,255,0.25)', border: '1.5px solid rgba(255,255,255,0.5)', color: '#fff', borderRadius: '10px', padding: '8px 18px', fontSize: '12px', fontWeight: '600', fontFamily: "'Poppins', sans-serif", cursor: 'pointer', width: 'fit-content' }}>
+              Shop Now →
+            </button>
+          </div>
+
+          {/* Most Popular */}
+          <div
+            onClick={() => navigate('/products/most-popular')}
+            style={{
+              background: 'linear-gradient(135deg, #F5A623, #f7c948)',
+              borderRadius: '20px', padding: '32px 36px',
+              cursor: 'pointer', position: 'relative',
+              overflow: 'hidden', minHeight: '160px',
+              display: 'flex', flexDirection: 'column', justifyContent: 'center',
+              transition: 'transform 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            <div style={{ fontSize: '32px', marginBottom: '8px' }}>⭐</div>
+            <div style={{ fontSize: '22px', fontWeight: '800', color: '#fff', marginBottom: '6px' }}>Most Popular</div>
+            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', marginBottom: '16px' }}>Top picks loved by thousands</div>
+            <button style={{ background: 'rgba(255,255,255,0.25)', border: '1.5px solid rgba(255,255,255,0.5)', color: '#fff', borderRadius: '10px', padding: '8px 18px', fontSize: '12px', fontWeight: '600', fontFamily: "'Poppins', sans-serif", cursor: 'pointer', width: 'fit-content' }}>
+              Shop Now →
+            </button>
+          </div>
+
+          {/* Just For You */}
+          <div
+            onClick={() => navigate('/products/just-for-you')}
+            style={{
+              background: 'linear-gradient(135deg, #6a1b9a, #9c27b0)',
+              borderRadius: '20px', padding: '32px 36px',
+              cursor: 'pointer', position: 'relative',
+              overflow: 'hidden', minHeight: '160px',
+              display: 'flex', flexDirection: 'column', justifyContent: 'center',
+              transition: 'transform 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            <div style={{ fontSize: '32px', marginBottom: '8px' }}>★</div>
+            <div style={{ fontSize: '22px', fontWeight: '800', color: '#fff', marginBottom: '6px' }}>Just For You</div>
+            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', marginBottom: '16px' }}>Curated based on your interests</div>
+            <button style={{ background: 'rgba(255,255,255,0.25)', border: '1.5px solid rgba(255,255,255,0.5)', color: '#fff', borderRadius: '10px', padding: '8px 18px', fontSize: '12px', fontWeight: '600', fontFamily: "'Poppins', sans-serif", cursor: 'pointer', width: 'fit-content' }}>
+              Shop Now →
+            </button>
+          </div>
+
+          {/* Budget Friendly */}
+          <div
+            onClick={() => navigate('/products/budget-deals')}
+            style={{
+              background: 'linear-gradient(135deg, #2e7d32, #66bb6a)',
+              borderRadius: '20px', padding: '32px 36px',
+              cursor: 'pointer', position: 'relative',
+              overflow: 'hidden', minHeight: '160px',
+              display: 'flex', flexDirection: 'column', justifyContent: 'center',
+              transition: 'transform 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            <div style={{ fontSize: '32px', marginBottom: '8px' }}>💰</div>
+            <div style={{ fontSize: '22px', fontWeight: '800', color: '#fff', marginBottom: '6px' }}>Budget Friendly Deals</div>
+            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', marginBottom: '16px' }}>Great styles that won't break the bank</div>
+            <button style={{ background: 'rgba(255,255,255,0.25)', border: '1.5px solid rgba(255,255,255,0.5)', color: '#fff', borderRadius: '10px', padding: '8px 18px', fontSize: '12px', fontWeight: '600', fontFamily: "'Poppins', sans-serif", cursor: 'pointer', width: 'fit-content' }}>
+              Shop Now →
+            </button>
+          </div>
+
+          {/* Trending Now */}
+          <div
+            onClick={() => navigate('/products/trending')}
+            style={{
+              background: 'linear-gradient(135deg, #E91E8C, #f472b6)',
+              borderRadius: '20px', padding: '32px 36px',
+              cursor: 'pointer', position: 'relative',
+              overflow: 'hidden', minHeight: '160px',
+              display: 'flex', flexDirection: 'column', justifyContent: 'center',
+              transition: 'transform 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            <div style={{ fontSize: '32px', marginBottom: '8px' }}>🔥</div>
+            <div style={{ fontSize: '22px', fontWeight: '800', color: '#fff', marginBottom: '6px' }}>Trending Now</div>
+            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', marginBottom: '16px' }}>The most talked about styles this season</div>
+            <button style={{ background: 'rgba(255,255,255,0.25)', border: '1.5px solid rgba(255,255,255,0.5)', color: '#fff', borderRadius: '10px', padding: '8px 18px', fontSize: '12px', fontWeight: '600', fontFamily: "'Poppins', sans-serif", cursor: 'pointer', width: 'fit-content' }}>
+              Shop Now →
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+      
+
+      <footer className="footer">
+        ® <span className="footer-brand">SMARTSTYLE</span> 2025. All Rights Reserved.
+      </footer>
+    </div>
+  )
+}

@@ -1,0 +1,522 @@
+/* =====================
+   HOME TOPBAR
+===================== */
+.wrapper_home {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 20px 40px;
+  background-color: rgb(247, 224, 95);
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px 0 16px;
+  flex-wrap: wrap;
+}
+
+
+.topbar-row-one {
+  display: contents; /* on desktop, acts as if the div doesn't exist */
+}
+
+.topbar-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #111;
+  flex-shrink: 0;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #F5F5F5;
+  border-radius: 24px;
+  padding: 10px 18px;
+  width: 200px;
+}
+
+.search-input {
+  border: none;
+  background: none;
+  outline: none;
+  font-size: 14px;
+  font-family: 'Poppins', sans-serif;
+  width: 100%;
+}
+
+.cat-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.cat-nav-item {
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+  white-space: nowrap;
+  border: 1.5px solid transparent;
+  transition: all 0.2s;
+}
+
+.cat-nav-item:hover { background: #f0f6ff; color: #4A90D9; }
+.cat-nav-item-active { background: #4A90D9 !important; color: #fff !important; border-color: #4A90D9 !important; }
+.cat-nav-item-special { color: #555;  font-weight: 600; }
+.cat-nav-item-special:hover { background: #f0f6ff; }
+
+.new-badge {
+  background: #FF4B4B;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 5px;
+}
+
+/* Special items always on their own row */
+.cat-nav-special-wrap {
+  display: contents; /* desktop — flows inline with other items */
+}
+/* =====================
+   TABLET & LAPTOP 1024px
+===================== */
+@media (max-width: 1024px) {
+
+  
+
+  .topbar {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 16px 0 12px;
+  }
+
+  .topbar-row-one {
+    display: contents;
+  }
+
+  .topbar-title {
+    flex-shrink: 0;
+  }
+
+  .search-bar {
+    width: 160px;
+    flex-shrink: 0;
+  }
+
+  .cat-nav {
+    flex: 1;
+    flex-wrap: nowrap; /* keep 4 items in one line */
+    min-width: 0;
+  }
+
+  .cat-nav-item {
+    padding: 7px 10px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  /* Special buttons always on their own second row */
+  .cat-nav-special-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;    /* forces new row */
+    padding-left: 4px;
+  }
+}
+
+
+/* =====================
+   MOBILE — max 600px
+===================== */
+@media (max-width: 600px) {
+  .topbar {
+    padding: 12px 0 10px;
+    gap: 8px;
+  }
+
+  .topbar-row-one {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .topbar-title { font-size: 20px; }
+
+  .search-bar {
+    flex: 1;
+    width: unset;
+  }
+
+  .cat-nav {
+    width: 100%;
+    flex: unset;
+    flex-wrap: wrap;
+  }
+
+  .cat-nav-item {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .cat-nav-special-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+  }
+}
+
+/* =====================
+   SMALL MOBILE — max 480px
+===================== */
+@media (max-width: 480px) {
+  .cat-nav-item {
+    padding: 5px 8px;
+    font-size: 10px;
+  }
+}
+
+/* =====================
+   HOME CAROUSEL
+===================== */
+.home-carousel {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  margin-bottom: 28px;
+  width: 100%;
+}
+
+.home-carousel-track {
+  display: flex;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.home-slide {
+  padding: 32px 40px;
+  display: flex;
+  align-items: center;
+  position: relative;
+  height: 200px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border-radius: 0 18px 18px 0;
+  overflow: hidden;
+}
+
+.slide-text { z-index: 1; }
+
+.slide-title { font-size: 38px; font-weight: 700; color: #fff; }
+.slide-desc { font-size: 15px; color: rgba(255,255,255,0.9); margin-top: 4px; }
+.slide-tag {
+  display: inline-block;
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+.slide-img {
+  width: 30%;
+  height: 100%;        /* ✅ fills full slide height */
+  position: absolute;
+  right: 0;
+  top: 0;
+  overflow: hidden;
+  border-radius: 0;
+}
+
+.slide-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.3);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel-dots {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 10;
+}
+
+.carousel-dot {
+  height: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: rgba(255,255,255,0.45);
+  border-radius: 50%;
+}
+
+.carousel-dot-active {
+  width: 22px !important;
+  border-radius: 4px !important;
+  background: #fff !important;
+}
+
+/* =====================
+   HOME CATEGORIES
+===================== */
+.home-cat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.home-cat-card {
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #f5f5f5;
+  transition: transform 0.2s;
+  height: 280px;
+}
+
+.home-cat-card:hover { transform: translateY(-3px); }
+
+.home-cat-img-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+
+.home-cat-img { height: 250px; overflow: hidden; background: #ddd; }
+.home-cat-img img { width: 100%; height: 100%; object-fit: cover; }
+
+.home-cat-label { padding: 8px 10px; font-size: 13px; font-weight: 600; color: #222; }
+.home-cat-count { color: #aaa; font-size: 12px; font-weight: 400; margin-left: 6px; }
+
+/* =====================
+   FLASH SALE
+===================== */
+.flash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0 14px;
+}
+
+.countdown {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #555;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.flash-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.flash-card {
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  height: 160px;
+  background: #eee;
+  cursor: pointer;
+}
+
+.flash-card img { width: 100%; height: 100%; object-fit: cover; }
+
+.flash-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: #FF4B4B;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 6px;
+}
+
+/* =====================
+   MOST POPULAR
+===================== */
+.popular-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.popular-card {
+  border-radius: 14px;
+  overflow: hidden;
+  background: #f9f9f9;
+  cursor: pointer;
+}
+
+.popular-img { height: 250px; overflow: hidden; background: #eee; }
+.popular-img img { width: 100%; height: 100%; object-fit: cover; }
+
+.popular-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+}
+
+.popular-likes { font-size: 12px; color: #888; }
+.popular-tag { color: #fff; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
+
+/* =====================
+   SUMMER BANNER
+===================== */
+.summer-banner {
+  background: linear-gradient(120deg, #F5A623, #f7c948);
+  border-radius: 20px;
+  padding: 36px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 24px;
+  min-height: 160px;
+}
+
+.summer-banner-text { z-index: 1; }
+.summer-banner-sub { font-size: 12px; color: rgba(255,255,255,0.9); font-weight: 600; margin-bottom: 6px; }
+.summer-banner-title { font-size: 32px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+.summer-banner-desc { font-size: 14px; color: rgba(255,255,255,0.85); margin-bottom: 18px; }
+
+.summer-btn {
+  background: #fff;
+  color: #F5A623;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+}
+.summer-banner-img {
+  width: 500px;
+  height: 100%;          /* fill full banner height */
+  position: absolute;
+  right: 0;
+  top: 0;                /* align to top instead of bottom */
+  bottom: 0;
+  overflow: hidden;
+  border-radius: 0 20px 20px 0;  /* match banner's right corners */
+}
+
+.summer-banner-img img { 
+  width: 100%; 
+  height: 100%; 
+  object-fit: cover;
+  object-position: center top;  /* focus on top of image */
+}
+
+
+/* =====================
+   HOME PRODUCT CARD (simple)
+===================== */
+.home-product-card {
+  border-radius: 14px;
+  overflow: hidden;
+  background: #f9f9f9;
+  cursor: pointer;
+}
+
+.home-product-img { height: 420px; overflow: hidden; background: #eee; }
+.home-product-img img { width: 100%; height: 100%; object-fit: cover; }
+.home-product-name { padding: 8px 10px 2px; font-size: 13px; font-weight: 500; color: #222; }
+.home-product-price { padding: 0 10px 10px; font-size: 13px; font-weight: 600; color: #4A90D9; }
+
+/* =====================
+   TABLET — 1024px
+===================== */
+@media (max-width: 1024px) {
+  .home-cat-grid { grid-template-columns: repeat(2, 1fr); }
+  .flash-grid { grid-template-columns: repeat(3, 1fr); }
+  .popular-grid { grid-template-columns: repeat(2, 1fr); }
+  .slide-title { font-size: 28px; }
+  .slide-img { width: 30%; height: 100%; }
+  .summer-banner { padding: 28px 32px; }
+  .summer-banner-title { font-size: 26px; }
+  .summer-banner-img { width: 150px; }
+}
+
+/* =====================
+   MOBILE — 768px
+===================== */
+@media (max-width: 768px) {
+  .topbar { padding: 14px 0 12px; gap: 10px; }
+  .topbar-title { font-size: 20px; }
+  .search-bar { width: 140px; padding: 8px 12px; }
+  .cat-nav-item { padding: 6px 10px; font-size: 11px; }
+
+  .home-carousel { border-radius: 12px; margin-bottom: 16px; }
+  .home-slide { padding: 20px 20px; min-height: 130px; }
+  .slide-title { font-size: 22px; }
+  .slide-desc { font-size: 12px; }
+  .slide-tag { font-size: 10px; padding: 4px 10px; margin-top: 8px; }
+.slide-img { width: 38%; height: 100%; }
+  .carousel-btn { width: 28px; height: 28px; }
+
+  .home-cat-grid { grid-template-columns: repeat(1, 1fr); gap: 10px; }
+  .home-cat-img { height: 120px; }
+
+  .flash-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .flash-card { height: 100px; }
+
+  .popular-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .popular-img { height: 150px; }
+
+  .summer-banner { padding: 20px 18px; min-height: 140px; margin-bottom: 16px; }
+  .summer-banner-title { font-size: 20px; }
+  .summer-banner-desc { font-size: 12px; margin-bottom: 12px; }
+  .summer-banner-img { width: 110px; height: 130px; }
+  .summer-btn { padding: 8px 14px; font-size: 12px; }
+}
+
+/* =====================
+   SMALL MOBILE — 480px
+===================== */
+@media (max-width: 480px) {
+  .flash-grid { grid-template-columns: repeat(2, 1fr); }
+  .home-cat-grid { grid-template-columns: repeat(1, 1fr); }
+  .slide-title { font-size: 18px; }
+ .slide-img { width: 35%; height: 100%; }
+  .summer-banner-img { display: none; }
+}

@@ -1,0 +1,28 @@
+/* =====================
+   ACCESSORIES SECTION TITLES
+===================== */
+.wrapper_accessories {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 20px 40px;
+  background-color: rgb(116, 239, 216);
+}
+.section-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-bar-blue {
+  width: 4px;
+  height: 24px;
+  background: #4A90D9;
+  border-radius: 4px;
+}
+
+.section-bar-pink {
+  width: 4px;
+  height: 24px;
+  background: #E91E8C;
+  border-radius: 4px;
+}
