@@ -1,12 +1,19 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Welcome from './pages/welcome'
 import Signup from './pages/signup'
 import Login from './pages/login'
 import Onboarding from './pages/onboarding'
 import Home from './pages/home'
+import Categories from './pages/categories'
 import Account from './pages/account'
 import Wishlist from './pages/wishlist'
 import Cart from './pages/cart'
+
+import ProductDetail from './pages/ProductDetail'
+
+import Checkout from './pages/checkout'
+import CheckoutAddress from './pages/checkoutAddress'
+import CheckoutPayment from './pages/checkoutPayment'
 
 import Men from './pages/men'
 import Women from './pages/women'
@@ -14,6 +21,10 @@ import Footwear from './pages/footwear'
 import FootwearMen from './pages/footwearmen'
 import FootwearWomen from './pages/footwearwomen'
 import Accessories from './pages/accessories'
+import MoodyOutfits from './pages/moodyoutfits'
+import OutfitDetail from './pages/outfitdetails'
+import CustomOutfit from './pages/CustomOutfit'
+
 
 import Nike from './pages/Nike' 
 import Adidas from './pages/Adidas'
@@ -59,23 +70,40 @@ import HushPuppiesFootwearWomen from './pages/HushPuppiesFootwearWomen'
 import AdidasFootwearWomen from './pages/AdidasFootwearWomen'
 import NewBalanceFootwearWomen from './pages/NewBalanceFootwearWomen'
 
-import Categories from './pages/categories'
 import NewItems from './pages/newitems'
 import FlashSale from './pages/flashsale'
 import MostPopular from './pages/mostpopular'
 import JustForYou from './pages/justforyou'
 import DealsOfDay from './pages/dealsofday'
 import SummerSpecial from './pages/summerspecial'
+import Trending from './pages/trending'
+import BudgetDeals from './pages/budgetdeals'
+
 import CommonMen from './pages/commonmen'
 import CommonWomen from './pages/commonwomen'
 import CommonFootwear from './pages/commonfootwear'
 import CommonAccessories from './pages/commonaccessories'
-import Trending from './pages/trending'
-import BudgetDeals from './pages/budgetdeals'
 
+import Search from './pages/search.jsx'
 
+import ForgotPassword from './pages/forgotpassword.jsx'
 
+import AdminDashboard from './pages/AdminDashboard'
+import AdminProducts from './pages/AdminProducts'
+import AdminAddProduct from './pages/AdminAddProduct'
+import AdminEditProduct from './pages/AdminEditProduct'
+import AdminUsers from './pages/AdminUsers'
+import AdminSettings from './pages/AdminSettings'
+import AdminLogin from './pages/AdminLogin'
+import AdminRoute from './components/AdminRoute'
+import AdminLayout from './components/AdminLayout.jsx'
+import AdminManager from './pages/Adminmanager.jsx'
+import { clearAdminSession } from './utils/adminSession'
 
+function AdminEntryRedirect() {
+  clearAdminSession()
+  return <Navigate to="/admin/login" replace />
+}
 
 function App() {
   return (
@@ -84,11 +112,17 @@ function App() {
         <Route path="/" element={<Welcome />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/home" element={<Home />} />
         <Route path="/account" element={<Account />} />
+        <Route path="/categories" element={<Categories />} />
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/checkout/address" element={<CheckoutAddress />} />
+        <Route path="/checkout/payment" element={<CheckoutPayment />} />
+        <Route path="/product/:id" element={<ProductDetail />} />
 
         <Route path="/products/men" element={<Men />} />
         <Route path="/products/women" element={<Women />} />
@@ -96,7 +130,13 @@ function App() {
         <Route path="/products/footwear/men" element={<FootwearMen />} />
         <Route path="/products/footwear/women" element={<FootwearWomen />} />
         <Route path="/products/accessories" element={<Accessories />} />
-
+        <Route path="/products/moodyoutfits" element={<MoodyOutfits />} />
+        <Route path="/products/moodyoutfits/:moodId" element={<MoodyOutfits />} />
+        <Route path="/products/moodyoutfits/:moodId/outfit/:outfitIndex" element={<OutfitDetail />} />
+        <Route path="/moodyoutfits/:moodId" element={<MoodyOutfits />} />
+        <Route path="/moodyoutfits/:moodId/outfit/:outfitIndex" element={<OutfitDetail />} />
+        <Route path="/custom-outfit" element={<CustomOutfit />} />
+        
         <Route path="/brand/nike" element={<Nike />} />
         <Route path="/brand/adidas" element={<Adidas />} />
         <Route path="/brand/hm" element={<HM />} />
@@ -141,26 +181,40 @@ function App() {
         <Route path="/brand/adidas-footwear-women" element={<AdidasFootwearWomen />} />
         <Route path="/brand/newbalance-footwear-women" element={<NewBalanceFootwearWomen />} />
 
-        <Route path="/categories" element={<Categories />} />
+        
         <Route path="/products/new" element={<NewItems />} />
         <Route path="/products/flash-sale" element={<FlashSale />} />
         <Route path="/products/most-popular" element={<MostPopular />} />
         <Route path="/products/just-for-you" element={<JustForYou />} />
         <Route path="/products/deals" element={<DealsOfDay />} />
         <Route path="/products/summer-special" element={<SummerSpecial />} />
+        <Route path="/products/trending" element={<Trending />} />
+        <Route path="/products/budget-deals" element={<BudgetDeals />} />
+        <Route path="/summer-special" element={<SummerSpecial />} />
+
         <Route path="/common/men" element={<CommonMen />} />
         <Route path="/common/women" element={<CommonWomen />} />
         <Route path="/common/footwear" element={<CommonFootwear />} />
         <Route path="/common/accessories" element={<CommonAccessories />} />
-        <Route path="/products/trending" element={<Trending />} />
-        <Route path="/products/budget-deals" element={<BudgetDeals />} />
         
+        <Route path="/search" element={<Search />} />
 
-
-
-
-
-
+        <Route path="/admin" element={<AdminEntryRedirect />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        <Route path="/admin/products" element={<AdminRoute><AdminProducts /></AdminRoute>} />
+        <Route path="/admin/products/new" element={<AdminRoute><AdminAddProduct /></AdminRoute>} />
+        <Route path="/admin/products/:id/edit" element={<AdminRoute><AdminEditProduct /></AdminRoute>} />
+        <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+        <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
+        <Route path="/admin/admins" element={
+          <AdminRoute>
+            <AdminLayout title="Admin Access" subtitle="Grant or remove admin access">
+              <AdminManager />
+            </AdminLayout>
+          </AdminRoute>
+        } />
+        
 
       </Routes>
     </BrowserRouter>

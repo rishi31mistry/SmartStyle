@@ -3,6 +3,10 @@ const router = express.Router();
 const User = require('../models/User');
 const auth = require('../middleware/authMiddleware');
 
+function normalizeSize(value) {
+  return String(value || '').trim().toUpperCase();
+}
+
 // GET cart
 router.get('/', auth, async (req, res) => {
   try {
@@ -55,9 +59,49 @@ router.delete('/remove/:productId', auth, async (req, res) => {
   const { size } = req.query;
   try {
     const user = await User.findById(req.user.id);
-    user.cart = user.cart.filter(
-      item => !(item.productId === req.params.productId && item.size === size)
-    );
+
+    const requestedSize = normalizeSize(size);
+    const productMatches = user.cart.filter(item => item.productId === req.params.productId);
+
+    if (productMatches.length === 0) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+
+    if (requestedSize) {
+      const exactSizeMatches = productMatches.filter(
+        item => normalizeSize(item.size) === requestedSize
+      );
+
+      if (exactSizeMatches.length > 0) {
+        let removed = false;
+        user.cart = user.cart.filter(item => {
+          const isMatch =
+            !removed &&
+            item.productId === req.params.productId &&
+            normalizeSize(item.size) === requestedSize;
+
+          if (isMatch) removed = true;
+          return !isMatch;
+        });
+      } else if (productMatches.length === 1) {
+        let removed = false;
+        user.cart = user.cart.filter(item => {
+          const isMatch = !removed && item.productId === req.params.productId;
+          if (isMatch) removed = true;
+          return !isMatch;
+        });
+      } else {
+        return res.status(404).json({ message: 'Matching size item not found' });
+      }
+    } else {
+      let removed = false;
+      user.cart = user.cart.filter(item => {
+        const isMatch = !removed && item.productId === req.params.productId;
+        if (isMatch) removed = true;
+        return !isMatch;
+      });
+    }
+
     await user.save();
     res.json(user.cart);
   } catch (err) {

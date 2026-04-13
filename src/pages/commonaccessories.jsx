@@ -1,25 +1,25 @@
-import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom' 
+import { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import Navbar from '../components/navbar'
 import '../styles/common.css'
 import '../styles/common-pages.css'
 
-function FilterSidebar({ filterOpen,  clearFilters,
-  selectedGender, setSelectedGender,
+function FilterSidebar({ filterOpen, setFilterOpen, clearFilters,
   selectedPrices, setSelectedPrices,
+  selectedGender,setSelectedGender,
   selectedCategories, setSelectedCategories,
   selectedBrands, setSelectedBrands,
   selectedColors, setSelectedColors,
   selectedRating, setSelectedRating,
 }) {
   const priceRanges = ['Under ₹500', '₹500 - ₹1000', '₹1000 - ₹2000', '₹2000 - ₹3000', 'Above ₹3000']
-  const categories = ['Watches', 'Bags', 'Sunglasses', 'Belts', 'Wallets','Ties','Cufflinks','Bags & Backpacks','Keychains','Trimmer', 'Jewellery','Handbags','Hair Accessories', 'Caps & Hats', 'Scarves & Stoles', 'Earrings', 'Necklaces', 'Bracelets&Bangles','Clutches','Rings', 'Perfumes']
+  const categories = ['Watches','Sunglasses', 'Belts','Caps & Hats', 'Wallets','Ties','Cufflinks','Bags & Backpacks','Keychains','Trimmer', 'Jewellery','Handbags','Hair Accessories', 'Scarves & Stoles', 'Earrings', 'Necklaces','Bracelets','Bangles','Clutches','Rings', 'Perfumes']
   const brands = ['Fossil', 'Casio', 'Titan', 'Fastrack', 'Hidesign', 'Baggit', 'Caprese', 'Ray-Ban', 'Wildcraft', 'Da Milano', 'Lavie', 'Zouk']
   const colors = [
     { name: 'Black', hex: '#111' }, { name: 'Brown', hex: '#6d4c41' },
-    { name: 'Gold', hex: '#ffd700' }, { name: 'Silver', hex: '#bdbdbd' },
+    { name: 'Gold', hex: '#FFD700' }, { name: 'Silver', hex: '#C0C0C0' },
+    { name: 'Pink', hex: '#e91e8c' }, { name: 'Blue', hex: '#1565C0' },
     { name: 'White', hex: '#f5f5f5' }, { name: 'Red', hex: '#e53935' },
-    { name: 'Blue', hex: '#1565C0' }, { name: 'Pink', hex: '#E91E8C' },
   ]
   const ratings = ['4★ & above', '3★ & above', '2★ & above']
 
@@ -86,7 +86,7 @@ function FilterSidebar({ filterOpen,  clearFilters,
           {colors.map(c => (
             <button key={c.name} title={c.name}
               className={`filter-color-btn ${selectedColors.includes(c.name) ? 'active' : ''}`}
-              style={{ background: c.hex, borderColor: selectedColors.includes(c.name) ? '#f57c00' : 'transparent' }}
+              style={{ background: c.hex, borderColor: selectedColors.includes(c.name) ? '#4A90D9' : 'transparent' }}
               onClick={() => toggleArr(selectedColors, setSelectedColors, c.name)}
             />
           ))}
@@ -105,18 +105,23 @@ function FilterSidebar({ filterOpen,  clearFilters,
           ))}
         </div>
       </div>
+      <button className="filter-apply-btn" onClick={() => setFilterOpen(false)}>
+        Apply Filters
+      </button>
     </div>
   )
 }
 
 export default function CommonAccessories() {
-
-  const [searchParams] = useSearchParams()
-  const urlGender = searchParams.get('gender')
-  const urlCategory = searchParams.get('category')
-  const [selectedGender, setSelectedGender] = useState(urlGender || 'All')
-
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const urlCategory = searchParams.get('category')
+  const urlGender = searchParams.get('gender')
+  const [selectedGender, setSelectedGender]= useState(urlGender || 'All')
+
+
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
   const [wishlist, setWishlist] = useState([])
   const [filterOpen, setFilterOpen] = useState(false)
   const [sortBy, setSortBy] = useState('popular')
@@ -126,8 +131,39 @@ export default function CommonAccessories() {
   const [selectedColors, setSelectedColors] = useState([])
   const [selectedRating, setSelectedRating] = useState(null)
 
-  const toggleWishlist = (id) => {
-    setWishlist(prev => prev.includes(id) ? prev.filter(w => w !== id) : [...prev, id])
+  useEffect(() => {
+  // Fetch both men and women accessories
+  Promise.all([
+    fetch('/api/products?gender=Accessories').then(r => r.json()),
+  ])
+  .then(([data]) => {
+    setProducts(data)
+    setLoading(false)
+  })
+  .catch(err => {
+    console.log(err)
+    setLoading(false)
+  })
+}, [])
+
+  const toggleWishlist = async (productId, product) => {
+    const token = localStorage.getItem('token')
+    if (!token) { navigate('/login'); return }
+    const isWishlisted = wishlist.includes(productId)
+    if (isWishlisted) {
+      await fetch(`/api/wishlist/remove/${productId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setWishlist(prev => prev.filter(id => id !== productId))
+    } else {
+      await fetch('/api/wishlist/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ productId, name: product.name, price: product.price, image: product.image })
+      })
+      setWishlist(prev => [...prev, productId])
+    }
   }
 
   const clearFilters = () => {
@@ -139,129 +175,55 @@ export default function CommonAccessories() {
     setSelectedRating(null)
   }
 
-  const products = [
-  { id: 1,  name: 'Chronograph Watch',  price: '₹3,499', rating: 4.7, tag: 'Hot',      gender: 'Men',   category: 'Watches',     brand: 'Fossil',   color: 'Black',  img: '/image/accessories/men/watch/d3.jpg' },
-  { id: 2,  name: 'Gold Hoop Earrings', price: '₹799',   rating: 4.6, tag: 'Popular',  gender: 'Women', category: 'Earrings',    brand: 'Zouk',     color: 'Gold',   img: '/image/accessories/women/earrings/d1.jpg' },
-  { id: 3,  name: 'Leather Wallet',     price: '₹999',   rating: 4.5, tag: 'New',      gender: 'Men',   category: 'Wallets',     brand: 'Hidesign', color: 'Brown',  img: '/image/accessories/men/wallet/d1.jpg' },
-  { id: 4,  name: 'Leather Tote Bag',   price: '₹1,799', rating: 4.4, tag: 'Trending', gender: 'Women', category: 'Bags',        brand: 'Lavie',    color: 'Brown',  img: '/image/accessories/women/bags/d2.jpg' },
-  { id: 5,  name: 'Aviator Sunglasses', price: '₹1,299', rating: 4.8, tag: 'Hot',      gender: 'Men',   category: 'Sunglasses',  brand: 'Ray-Ban',  color: 'Black',  img: '/image/accessories/men/sunglasses/d1.jpg' },
-  { id: 6,  name: 'Silk Scarf',         price: '₹699',   rating: 4.4, tag: 'New',      gender: 'Women', category: 'Scarves',     brand: 'Zouk',     color: 'Pink',   img: '/image/accessories/women/scarf/d1.jpg' },
-  { id: 7,  name: 'Canvas Backpack',    price: '₹1,499', rating: 4.3, tag: 'Popular',  gender: 'Men',   category: 'Bags',        brand: 'Wildcraft', color: 'Black', img: '/image/accessories/men/bag/d1.jpg' },
-  { id: 8,  name: 'Crossbody Bag',      price: '₹1,299', rating: 4.5, tag: 'Trending', gender: 'Women', category: 'Bags',        brand: 'Caprese',  color: 'Brown',  img: '/image/accessories/women/bags/d3.jpg' },
-  { id: 9,  name: 'Leather Belt',       price: '₹599',   rating: 4.2, tag: 'New',      gender: 'Men',   category: 'Belts',       brand: 'Hidesign', color: 'Brown',  img: '/image/accessories/men/belt/d1.jpg' },
-  { id: 10, name: 'Pearl Necklace',     price: '₹849',   rating: 4.6, tag: 'Hot',      gender: 'Women', category: 'Necklaces',   brand: 'Zouk',     color: 'White',  img: '/image/accessories/women/necklace/d1.jpg' },
-  { id: 11, name: 'Sports Watch',       price: '₹2,499', rating: 4.7, tag: 'Popular',  gender: 'Men',   category: 'Watches',     brand: 'Casio',    color: 'Black',  img: '/image/accessories/men/watch/d2.jpg' },
-  { id: 12, name: 'Retro Sunglasses',   price: '₹899',   rating: 4.3, tag: 'New',      gender: 'Women', category: 'Sunglasses',  brand: 'Ray-Ban',  color: 'Black',  img: '/image/accessories/women/sunglasses/d1.jpg' },
-  { id: 13, name: 'Straw Hat',          price: '₹499',   rating: 4.1, tag: 'Trending', gender: 'Men',   category: 'Caps & Hats', brand: 'Fastrack', color: 'Beige',  img: '/image/accessories/men/hat/d1.jpg' },
-  { id: 14, name: 'Ladies Hat',         price: '₹599',   rating: 4.2, tag: 'Popular',  gender: 'Women', category: 'Caps & Hats', brand: 'Baggit',   color: 'Pink',   img: '/image/accessories/women/hat/d1.jpg' },
-  { id: 15, name: 'Minimalist Watch',   price: '₹2,999', rating: 4.6, tag: 'Hot',      gender: 'Men',   category: 'Watches',     brand: 'Titan',    color: 'Silver', img: '/image/accessories/men/watch/d1.jpg' },
-  { id: 16, name: 'Charm Bracelet',     price: '₹549',   rating: 4.5, tag: 'New',      gender: 'Women', category: 'Bracelets',   brand: 'Zouk',     color: 'Gold',   img: '/image/accessories/women/bracelet/d1.jpg' },
-
-  { id: 17, name: 'Leather Wallet',    price: '₹499',   originalPrice: '₹999',   discount: '50%', rating: 4.4, tag: null, gender: 'Men',   category: 'Wallets',   brand: 'Non Brand', color: 'Brown',  img: '/image/accessories/men/wallet/d2.jpg' },
-  { id: 18, name: 'Pearl Necklace Set',price: '₹649',   originalPrice: '₹1,299', discount: '50%', rating: 4.6, tag: null, gender: 'Women', category: 'Necklaces', brand: 'Non Brand', color: 'White',  img: '/image/accessories/women/necklace/d2.jpg' },
-  { id: 19, name: 'Analog Watch',      price: '₹1,999', originalPrice: '₹3,999', discount: '50%', rating: 4.7, tag: null, gender: 'Men',   category: 'Watches',   brand: 'Non Brand', color: 'Black',  img: '/image/accessories/men/watch/d7.jpg' },
-  { id: 20, name: 'Tote Handbag',      price: '₹899',   originalPrice: '₹1,799', discount: '50%', rating: 4.3, tag: null, gender: 'Women', category: 'Bags',      brand: 'Non Brand', color: 'Brown',  img: '/image/accessories/women/bags/d7.jpg' },
-
-  { id: 21, name: 'Chronograph Watch',     price: '₹3,499', rating: 4.7, tag: 'Hot',      gender: 'Men',   category: 'Watches',    brand: 'Non Brand', color: 'Black',  img: '/image/accessories/men/watch/d4.jpg' },
-  { id: 22, name: 'Gold Hoop Earrings',    price: '₹799',   rating: 4.6, tag: 'Popular',  gender: 'Women', category: 'Earrings',   brand: 'Non Brand', color: 'Gold',   img: '/image/accessories/women/earrings/d2.jpg' },
-  { id: 23, name: 'Leather Crossbody Bag', price: '₹1,799', rating: 4.5, tag: 'Trending', gender: 'Women', category: 'Bags',       brand: 'Non Brand', color: 'Brown',  img: '/image/accessories/women/bags/d4.jpg' },
-  { id: 24, name: 'Aviator Sunglasses',    price: '₹1,299', rating: 4.8, tag: 'New',      gender: 'Men',   category: 'Sunglasses', brand: 'Non Brand', color: 'Black',  img: '/image/accessories/men/sunglasses/d3.jpg' },
-  { id: 25, name: 'Silk Scarf',            price: '₹699',   rating: 4.4, tag: 'Hot',      gender: 'Women', category: 'Scarves',    brand: 'Non Brand', color: 'Pink',   img: '/image/accessories/women/scarf/d2.jpg' },
-  { id: 26, name: 'Beaded Bracelet Set',   price: '₹499',   rating: 4.5, tag: 'Popular',  gender: 'Women', category: 'Bracelets',  brand: 'Non Brand', color: 'Gold',   img: '/image/accessories/women/bracelet/d3.jpg' },
-  { id: 27, name: 'Canvas Backpack',       price: '₹1,499', rating: 4.3, tag: 'Trending', gender: 'Men',   category: 'Bags',       brand: 'Non Brand', color: 'Black',  img: '/image/accessories/men/bag/d2.jpg' },
-  { id: 28, name: 'Minimalist Watch',      price: '₹2,999', rating: 4.6, tag: 'New',      gender: 'Men',   category: 'Watches',    brand: 'Non Brand', color: 'Silver', img: '/image/accessories/men/watch/d5.jpg' },
-
-  { id: 29, name: 'Smart Watch',          price: '₹4,999', rating: 4.7, tag: 'Trending', gender: 'Men',   category: 'Watches',     brand: 'Non Brand', color: 'Black',  img: '/image/accessories/men/watch/d6.jpg' },
-  { id: 30, name: 'Layered Necklace',     price: '₹899',   rating: 4.5, tag: 'Hot',      gender: 'Women', category: 'Necklaces',   brand: 'Non Brand', color: 'Gold',   img: '/image/accessories/women/necklace/d3.jpg' },
-  { id: 31, name: 'Bucket Hat',           price: '₹599',   rating: 4.3, tag: 'New',      gender: 'Women', category: 'Caps & Hats', brand: 'Non Brand', color: 'Pink',   img: '/image/accessories/women/hat/d2.jpg' },
-  { id: 32, name: 'Mini Shoulder Bag',    price: '₹1,299', rating: 4.6, tag: 'Popular',  gender: 'Women', category: 'Bags',        brand: 'Non Brand', color: 'Brown',  img: '/image/accessories/women/bags/d5.jpg' },
-  { id: 33, name: 'Stackable Rings Set',  price: '₹699',   rating: 4.4, tag: 'Trending', gender: 'Women', category: 'Rings',       brand: 'Non Brand', color: 'Silver', img: '/image/accessories/women/ring/d2.jpg' },
-  { id: 34, name: 'Printed Tote Bag',     price: '₹799',   rating: 4.2, tag: 'Hot',      gender: 'Women', category: 'Bags',        brand: 'Non Brand', color: 'Brown',  img: '/image/accessories/women/bags/d6.jpg' },
-  { id: 35, name: 'Charm Bracelet',       price: '₹549',   rating: 4.5, tag: 'New',      gender: 'Women', category: 'Bracelets',   brand: 'Non Brand', color: 'Gold',   img: '/image/accessories/women/bracelet/d2.jpg' },
-  { id: 36, name: 'Polarized Sunglasses', price: '₹1,499', rating: 4.6, tag: 'Popular',  gender: 'Men',   category: 'Sunglasses',  brand: 'Non Brand', color: 'Black',  img: '/image/accessories/men/sunglasses/d4.jpg' },
-
-  { id: 37, name: 'Fossil Chronograph',      price: '₹3,499', rating: 4.7, tag: 'Hot',      gender: 'Men', category: 'Watches',         brand: 'Non Brand', color: 'Black',  img: '/image/accessories/men/watch/d8.jpg' },
-  { id: 38, name: 'Leather Bifold Wallet',   price: '₹999',   rating: 4.5, tag: 'New',      gender: 'Men', category: 'Wallets',         brand: 'Non Brand', color: 'Brown',  img: ' /image/accessories/men/wallet/d3.jpg' },
-  { id: 39, name: 'Formal Leather Belt',     price: '₹599',   rating: 4.2, tag: 'Popular',  gender: 'Men', category: 'Belts',           brand: 'Non Brand', color: 'Brown',  img: '/image/accessories/men/belt/d2.jpg' },
-  { id: 40, name: 'Aviator Sunglasses',      price: '₹1,299', rating: 4.8, tag: 'Hot',      gender: 'Men', category: 'Sunglasses',      brand: 'Non Brand', color: 'Black',  img: ' /image/accessories/men/sunglasses/d2.jpg' },
-  { id: 41, name: 'Classic Cap',             price: '₹499',   rating: 4.1, tag: 'Trending', gender: 'Men', category: 'Caps & Hats',     brand: 'Non Brand', color: 'Beige',  img: '/image/accessories/men/hat/d2.jpg' },
-  { id: 42, name: 'Formal Tie',              price: '₹399',   rating: 4.3, tag: 'New',      gender: 'Men', category: 'Ties',            brand: 'Non Brand', color: 'Black',  img: '/image/accessories/men/ties/d1.jpg' },
-  { id: 43, name: 'Silver Cufflinks',        price: '₹699',   rating: 4.4, tag: 'Popular',  gender: 'Men', category: 'Cufflinks',       brand: 'Non Brand', color: 'Silver', img: '/image/accessories/men/cufflinks/d1.jpg' },
-  { id: 44, name: 'Canvas Backpack',         price: '₹1,499', rating: 4.3, tag: 'Trending', gender: 'Men', category: 'Bags & Backpacks',brand: 'Non Brand', color: 'Black',  img: '/image/accessories/men/bag/d3.jpg' },
-  { id: 45, name: 'Metal Keychain',          price: '₹199',   rating: 4.0, tag: 'New',      gender: 'Men', category: 'Keychains',       brand: 'Non Brand', color: 'Silver', img: '/image/accessories/men/keychains/d1.jpg' },
-  { id: 46, name: 'Beaded Bracelet',         price: '₹349',   rating: 4.3, tag: 'Hot',      gender: 'Men', category: 'Bracelets',       brand: 'Non Brand', color: 'Brown',  img: '/image/accessories/men/bracelet/d1.jpg' },
-  { id: 47, name: 'Electric Trimmer',        price: '₹1,299', rating: 4.5, tag: 'Popular',  gender: 'Men', category: 'Trimmer',         brand: 'Non Brand', color: 'Black',  img: '/image/accessories/men/trimmer/d1.jpg' },
-  { id: 48, name: 'Woody Perfume',           price: '₹1,499', rating: 4.6, tag: 'Trending', gender: 'Men', category: 'Perfumes',        brand: 'Non Brand', color: 'Brown',  img: '/image/accessories/men/perfumes/d1.jpg' },
-
-  { id: 49, name: 'Leather Handbag',         price: '₹1,799', rating: 4.4, tag: 'Trending', gender: 'Women', category: 'Handbags',            brand: 'Non Brand', color: 'Brown',  img: '/image/accessories/women/bags/d1.jpg' },
-  { id: 50, name: 'Gold Jewellery Set',      price: '₹1,299', rating: 4.6, tag: 'Hot',      gender: 'Women', category: 'Jewellery',           brand: 'Non Brand', color: 'Gold',   img: '/image/accessories/women/jewellery/d1.jpg' },
-  { id: 51, name: 'Elegant Wrist Watch',     price: '₹2,499', rating: 4.5, tag: 'Popular',  gender: 'Women', category: 'Watches',             brand: 'Non Brand', color: 'Silver', img: '/image/accessories/women/watch/d1.jpg' },
-  { id: 52, name: 'Retro Sunglasses',        price: '₹899',   rating: 4.3, tag: 'New',      gender: 'Women', category: 'Sunglasses',          brand: 'Non Brand', color: 'Black',  img: '/image/accessories/women/sunglasses/d2.jpg' },
-  { id: 53, name: 'Silk Scarf',              price: '₹699',   rating: 4.4, tag: 'New',      gender: 'Women', category: 'Scarves & Stoles',    brand: 'Non Brand', color: 'Pink',   img: '/image/accessories/women/scarf/d2.jpg' },
-  { id: 54, name: 'Floral Hair Band',        price: '₹299',   rating: 4.2, tag: 'Trending', gender: 'Women', category: 'Hair Accessories',    brand: 'Non Brand', color: 'Pink',   img: '/image/accessories/women/hair/d1.jpg' },
-  { id: 55, name: 'Gold Hoop Earrings',      price: '₹799',   rating: 4.6, tag: 'Popular',  gender: 'Women', category: 'Earrings',            brand: 'Non Brand', color: 'Gold',   img: '/image/accessories/women/earrings/d3.jpg' },
-  { id: 56, name: 'Pearl Necklace',          price: '₹849',   rating: 4.6, tag: 'Hot',      gender: 'Women', category: 'Necklaces',           brand: 'Non Brand', color: 'White',  img: '/image/accessories/women/necklace/d4.jpg' },
-  { id: 57, name: 'Gold Bangle Set',         price: '₹999',   rating: 4.5, tag: 'Popular',  gender: 'Women', category: 'Bangles & Bracelets', brand: 'Non Brand', color: 'Gold',   img: '/image/accessories/women/bangle/d1.jpg' },
-  { id: 58, name: 'Party Clutch',            price: '₹1,099', rating: 4.3, tag: 'Trending', gender: 'Women', category: 'Clutches',            brand: 'Non Brand', color: 'Gold',   img: '/image/accessories/women/clutche/d1.jpg' },
-  { id: 59, name: 'Stackable Rings Set',     price: '₹699',   rating: 4.4, tag: 'New',      gender: 'Women', category: 'Rings',               brand: 'Non Brand', color: 'Silver', img: '/image/accessories/women/ring/d1.jpg' },
-  { id: 60, name: 'Floral Perfume',          price: '₹1,299', rating: 4.6, tag: 'Hot',      gender: 'Women', category: 'Perfumes',            brand: 'Non Brand', color: 'Pink',   img: '/image/accessories/women/perfume/d1.jpg' },
-
-]
-
-  // Apply filters
-  let filteredProducts = selectedGender === 'All' ? [...products] : products.filter(p => p.gender === selectedGender)
-
+let filteredProducts = selectedGender === 'All' 
+  ? [...products] 
+  : products.filter(p => p.subGender === selectedGender)
   if (selectedPrices.length > 0) {
     filteredProducts = filteredProducts.filter(p => {
-      const price = parseInt(p.price.replace(/[₹,]/g, ''))
       return selectedPrices.some(range => {
-        if (range === 'Under ₹500') return price < 500
-        if (range === '₹500 - ₹1000') return price >= 500 && price <= 1000
-        if (range === '₹1000 - ₹2000') return price >= 1000 && price <= 2000
-        if (range === '₹2000 - ₹3000') return price >= 2000 && price <= 3000
-        if (range === 'Above ₹3000') return price > 3000
+        if (range === 'Under ₹500') return p.price < 500
+        if (range === '₹500 - ₹1000') return p.price >= 500 && p.price <= 1000
+        if (range === '₹1000 - ₹2000') return p.price >= 1000 && p.price <= 2000
+        if (range === '₹2000 - ₹3000') return p.price >= 2000 && p.price <= 3000
+        if (range === 'Above ₹3000') return p.price > 3000
         return true
       })
     })
   }
+
   if (selectedCategories.length > 0) {
-  filteredProducts = filteredProducts.filter(p =>
-    selectedCategories.includes(p.category)
-  )
-}
+    filteredProducts = filteredProducts.filter(p => {
+      if (Array.isArray(p.category)) return selectedCategories.some(c => p.category.includes(c))
+      return selectedCategories.includes(p.category)
+    })
+  }
 
-if (selectedBrands.length > 0) {
-  filteredProducts = filteredProducts.filter(p =>
-    selectedBrands.includes(p.brand)
-  )
-}
+  if (selectedBrands.length > 0) {
+    filteredProducts = filteredProducts.filter(p => selectedBrands.includes(p.brand))
+  }
 
-if (selectedColors.length > 0) {
-  filteredProducts = filteredProducts.filter(p =>
-    selectedColors.includes(p.color)
-  )
-}
+  if (selectedColors.length > 0) {
+    filteredProducts = filteredProducts.filter(p => selectedColors.includes(p.color))
+  }
 
   if (selectedRating) {
     const minRating = parseInt(selectedRating)
     filteredProducts = filteredProducts.filter(p => p.rating >= minRating)
   }
 
-  if (sortBy === 'price-low') {
-    filteredProducts.sort((a, b) =>
-      parseInt(a.price.replace(/[₹,]/g, '')) - parseInt(b.price.replace(/[₹,]/g, ''))
-    )
-  } else if (sortBy === 'price-high') {
-    filteredProducts.sort((a, b) =>
-      parseInt(b.price.replace(/[₹,]/g, '')) - parseInt(a.price.replace(/[₹,]/g, ''))
-    )
-  } else if (sortBy === 'newest') {
-    filteredProducts = [...filteredProducts].reverse()
-  } else if (sortBy === 'popular') {
-    filteredProducts.sort((a, b) => b.rating - a.rating)
-  }
+  if (sortBy === 'price-low') filteredProducts.sort((a, b) => a.price - b.price)
+  else if (sortBy === 'price-high') filteredProducts.sort((a, b) => b.price - a.price)
+  else if (sortBy === 'newest') filteredProducts = [...filteredProducts].reverse()
+  else if (sortBy === 'popular') filteredProducts.sort((a, b) => b.rating - a.rating)
 
-  
+  const tagColor = (tag) => {
+    if (tag === 'Hot') return '#F5A623'
+    if (tag === 'New') return '#4A90D9'
+    if (tag === 'Trending') return '#E91E8C'
+    if (tag === 'Sale') return '#FF4B4B'
+    if (tag === 'Bestseller') return '#00897B'
+    return '#00897B'
+  }
 
   return (
     <div className="page">
@@ -275,7 +237,9 @@ if (selectedColors.length > 0) {
             {urlCategory ? decodeURIComponent(urlCategory) : urlGender ? `${urlGender}'s Accessories` : 'Accessories'}
           </h1>
         </div>
+
         <div className={`filter-overlay ${filterOpen ? 'open' : ''}`} onClick={() => setFilterOpen(false)} />
+
         <div className="common-page-layout">
           <FilterSidebar
             filterOpen={filterOpen} setFilterOpen={setFilterOpen}
@@ -304,28 +268,56 @@ if (selectedColors.length > 0) {
                 </select>
               </div>
             </div>
-            <div className="common-product-grid">
-              {filteredProducts.map(p => (
-                <div key={p.id} className="product-card">
-                  <div className="product-img-wrap" style={{ height: '260px' }}>
-                    <img src={p.img} alt={p.name} />
-                    <button className="wishlist-btn" onClick={() => toggleWishlist(p.id)}>
-                      <svg width="16" height="16" fill={wishlist.includes(p.id) ? '#FF4B4B' : 'none'} stroke={wishlist.includes(p.id) ? '#FF4B4B' : '#fff'} strokeWidth="2" viewBox="0 0 24 24">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="product-info">
-                    <div className="product-name">{p.name}</div>
-                    <div className="product-meta">
-                      <span className="product-price" style={{ color: '#f57c00' }}>{p.price}</span>
-                      <span className="product-rating">★ {p.rating}</span>
+
+            {loading && (
+              <div style={{ textAlign: 'center', padding: '60px', fontSize: '18px', color: '#888' }}>
+                Loading products...
+              </div>
+            )}
+
+            {!loading && (
+              <div className="common-product-grid">
+                {filteredProducts.map(p => (
+                  <div
+                    key={p._id}
+                    className="product-card"
+                    onClick={() => navigate(`/product/${p._id}`)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="product-img-wrap" style={{ height: '420px' }}>
+                      <img src={p.image} alt={p.name} />
+                      <button
+                        className="wishlist-btn"
+                        onClick={(e) => { e.stopPropagation(); toggleWishlist(p._id, p) }}
+                      >
+                        <svg width="16" height="16"
+                          fill={wishlist.includes(p._id) ? '#FF4B4B' : 'none'}
+                          stroke={wishlist.includes(p._id) ? '#FF4B4B' : '#fff'}
+                          strokeWidth="2" viewBox="0 0 24 24">
+                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                        </svg>
+                      </button>
+                      {p.tag && (
+                        <span className="product-tag" style={{ background: tagColor(p.tag) }}>{p.tag}</span>
+                      )}
                     </div>
-                    <button className="add-to-cart-btn" style={{ background: '#f57c00' }}>Add to Cart</button>
+                    <div className="product-info">
+                      <div className="product-name">{p.name}</div>
+                      <div className="product-meta">
+                        <span className="product-price">₹{p.price.toLocaleString('en-IN')}</span>
+                        <span className="product-rating">★ {p.rating}</span>
+                      </div>
+                      <button
+                        className="add-to-cart-btn"
+                        onClick={(e) => { e.stopPropagation(); navigate(`/product/${p._id}`) }}
+                      >
+                        Add to Cart
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -333,3 +325,4 @@ if (selectedColors.length > 0) {
     </div>
   )
 }
+

@@ -55,7 +55,7 @@ export default function Navbar({ active }) {
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) return
-    fetch('http://localhost:5000/api/cart', {
+    fetch('/api/cart', {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -204,3 +204,4 @@ const styles = {
     transition: 'all 0.2s',
   },
 }
+

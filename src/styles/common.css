@@ -24,32 +24,32 @@ body {
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 20px 40px;
-  background-color: rgb(236, 134, 248);
+  background-color: white;
 }
 
 .wrapper_women {
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 20px 40px;
-  background-color: lightpink;
+  background-color: white;
 }
 .wrapper_wearwomen {
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 20px 40px;
-  background-color: lightpink;
+  background-color: white;
 }
 .wrapper_men {
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 20px 40px;
-  background-color:rgb(244, 75, 75);
+  background-color:white;
 }
 .wrapper_wearmen {
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 20px 40px;
-  background-color:rgb(244, 75, 75);
+  background-color:white;
 }
 
 /* =====================
@@ -243,7 +243,7 @@ body {
   font-size: 13px;
   font-weight: 600;
   color: #222;
-  padding: 8px 4px 2px;
+  padding: 8px 4px 8px;
 }
 
 .cat-count {

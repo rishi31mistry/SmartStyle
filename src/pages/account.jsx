@@ -4,14 +4,15 @@ import Navbar from '../components/navbar'
 import '../styles/common.css'
 import '../styles/account.css'
 
-function AccItem({ item }) {
+function AccItem({ item, onClick }) {
   const [hovered, setHovered] = useState(false)
   return (
     <div
       className="acc-item"
-      style={{ background: hovered ? '#f9fbff' : '#fff' }}
+      style={{ background: hovered ? '#f9fbff' : '#fff', cursor: onClick ? 'pointer' : 'default' }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={onClick}
     >
       <div className="acc-item-icon">{item.icon}</div>
       <div className="acc-item-text">
@@ -27,6 +28,18 @@ export default function Account() {
   const navigate = useNavigate()
   const [logoutHovered, setLogoutHovered] = useState(false)
   const [user, setUser] = useState(null)
+  const [showPersonalForm, setShowPersonalForm] = useState(false)
+  const [showAddressForm, setShowAddressForm] = useState(false)
+  const [showPaymentForm, setShowPaymentForm] = useState(false)
+  const [showPrivacyForm, setShowPrivacyForm] = useState(false)
+  const [paymentMode, setPaymentMode] = useState('card')
+  const [form, setForm] = useState({ name: '', email: '', phone: '' })
+  const [addressForm, setAddressForm] = useState({ street: '', city: '', state: '', pincode: '' })
+  const [paymentForm, setPaymentForm] = useState({ cardName: '', cardNumber: '', cardExpiry: '', upiId: '' })
+  const [privacyForm, setPrivacyForm] = useState({ twoFactor: false, loginAlerts: true, sessionTimeout: 30 })
+  const [passwordForm, setPasswordForm] = useState({ current: '', next: '', confirm: '' })
+  const [saving, setSaving] = useState(false)
+  const [saveMsg, setSaveMsg] = useState('')
   const [stats, setStats] = useState({
     orders: 0,
     wishlist: 0,
@@ -40,12 +53,37 @@ export default function Account() {
     return
   }
 
-  fetch('http://localhost:5000/api/user/profile', {
+  fetch('/api/user/profile', {
     headers: { Authorization: `Bearer ${token}` }
   })
     .then(res => res.json())
     .then(data => {
       setUser(data)
+      setForm({
+        name: data.name || '',
+        email: data.email || '',
+        phone: data.phone || ''
+      })
+      setAddressForm({
+        street: data.addressStreet || '',
+        city: data.addressCity || '',
+        state: data.addressState || '',
+        pincode: data.addressPincode || ''
+      })
+      setPaymentForm({
+        cardName: data.paymentCardName || '',
+        cardNumber: data.paymentCardLast4 ? `**** **** **** ${data.paymentCardLast4}` : '',
+        cardExpiry: data.paymentCardExpiry || '',
+        upiId: data.paymentUpiId || ''
+      })
+      setPrivacyForm({
+        twoFactor: !!data.securityTwoFactor,
+        loginAlerts: data.securityLoginAlerts !== undefined ? !!data.securityLoginAlerts : true,
+        sessionTimeout: data.securitySessionTimeout || 30
+      })
+      if (data.paymentUpiId && !data.paymentCardLast4) {
+        setPaymentMode('upi')
+      }
       setStats({
         orders: data.orders?.length || 0,
         wishlist: data.wishlist?.length || 0,
@@ -61,20 +99,207 @@ export default function Account() {
     navigate('/login')
   }
 
+  const handleSave = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    setSaveMsg('')
+    try {
+      const token = localStorage.getItem('token')
+      const res = await fetch('/api/user/update', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          phone: form.phone
+        })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.message || 'Update failed')
+      setUser(data)
+      setSaveMsg('Profile updated successfully.')
+      setShowPersonalForm(false)
+    } catch (err) {
+      setSaveMsg(err.message || 'Update failed')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleSaveAddress = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    setSaveMsg('')
+    try {
+      const token = localStorage.getItem('token')
+      const res = await fetch('/api/user/update', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          addressStreet: addressForm.street,
+          addressCity: addressForm.city,
+          addressState: addressForm.state,
+          addressPincode: addressForm.pincode
+        })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.message || 'Update failed')
+      setUser(data)
+      setSaveMsg('Address updated successfully.')
+      setShowAddressForm(false)
+    } catch (err) {
+      setSaveMsg(err.message || 'Update failed')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleSavePayment = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    setSaveMsg('')
+    try {
+      const token = localStorage.getItem('token')
+      const last4 = paymentForm.cardNumber.replace(/\D/g, '').slice(-4)
+      const res = await fetch('/api/user/update', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(
+          paymentMode === 'card'
+            ? {
+                paymentCardName: paymentForm.cardName,
+                paymentCardLast4: last4,
+                paymentCardExpiry: paymentForm.cardExpiry
+              }
+            : {
+                paymentUpiId: paymentForm.upiId
+              }
+        )
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.message || 'Update failed')
+      setUser(data)
+      setSaveMsg('Payment methods updated successfully.')
+      setShowPaymentForm(false)
+      setPaymentForm(prev => ({
+        ...prev,
+        cardNumber: paymentMode === 'card' && last4 ? `**** **** **** ${last4}` : prev.cardNumber
+      }))
+    } catch (err) {
+      setSaveMsg(err.message || 'Update failed')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleSavePrivacy = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    setSaveMsg('')
+    try {
+      const token = localStorage.getItem('token')
+      const res = await fetch('/api/user/update', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          securityTwoFactor: privacyForm.twoFactor,
+          securityLoginAlerts: privacyForm.loginAlerts,
+          securitySessionTimeout: Number(privacyForm.sessionTimeout) || 30
+        })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.message || 'Update failed')
+      setUser(data)
+      setSaveMsg('Privacy & security updated successfully.')
+      setShowPrivacyForm(false)
+    } catch (err) {
+      setSaveMsg(err.message || 'Update failed')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    setSaveMsg('')
+    try {
+      if (!passwordForm.current || !passwordForm.next || !passwordForm.confirm) {
+        throw new Error('All password fields are required')
+      }
+      if (passwordForm.next.length < 8) {
+        throw new Error('New password must be at least 8 characters')
+      }
+      if (passwordForm.next !== passwordForm.confirm) {
+        throw new Error('New password and confirm password do not match')
+      }
+      const token = localStorage.getItem('token')
+      const res = await fetch('/api/user/password', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          currentPassword: passwordForm.current,
+          newPassword: passwordForm.next
+        })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.message || 'Update failed')
+      setSaveMsg('Password updated successfully.')
+      setPasswordForm({ current: '', next: '', confirm: '' })
+    } catch (err) {
+      setSaveMsg(err.message || 'Update failed')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDeleteAccount = async () => {
+    const ok = window.confirm('Are you sure you want to delete your account? This cannot be undone.')
+    if (!ok) return
+    try {
+      const token = localStorage.getItem('token')
+      const res = await fetch('/api/user/delete', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (!res.ok) throw new Error('Delete failed')
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      navigate('/login')
+    } catch (err) {
+      alert(err.message || 'Delete failed')
+    }
+  }
+
   const accSections = [
     {
       title: 'My Account',
       items: [
-        { icon: '👤', title: 'Personal Information', sub: 'Name, email, phone' },
-        { icon: '📍', title: 'Saved Addresses', sub: 'Home, work & more' },
-        { icon: '💳', title: 'Payment Methods', sub: 'Cards, UPI, wallets' },
+        { icon: '👤', title: 'Personal Information', sub: 'Name, email, phone', onClick: () => setShowPersonalForm(v => !v) },
+        { icon: '📍', title: 'Saved Addresses', sub: 'Home, work & more', onClick: () => setShowAddressForm(v => !v) },
+        { icon: '💳', title: 'Payment Methods', sub: 'Cards, UPI, wallets', onClick: () => setShowPaymentForm(v => !v) },
       ]
     },
     {
       title: 'My Orders',
       items: [
         { icon: '🛍️', title: 'Order History', sub: 'Track & manage orders' },
-        { icon: '❤️', title: 'Wishlist', sub: `${stats.wishlist} saved items` },
+        { icon: '❤️', title: 'Wishlist', sub: `${stats.wishlist} saved items`, onClick: () => navigate('/wishlist') },
         { icon: '⭐', title: 'My Reviews', sub: `${stats.reviews} reviews given` },
       ]
     },
@@ -82,7 +307,7 @@ export default function Account() {
       title: 'Settings',
       items: [
         { icon: '🔔', title: 'Notifications', sub: 'Manage alerts & updates' },
-        { icon: '🔒', title: 'Privacy & Security', sub: 'Password, data settings' },
+        { icon: '🔒', title: 'Privacy & Security', sub: 'Password, data settings', onClick: () => setShowPrivacyForm(v => !v) },
         { icon: '⚙️', title: 'App Settings', sub: 'Language, theme' },
       ]
     },
@@ -98,7 +323,14 @@ export default function Account() {
         <div className="profile-card">
           <div className="profile-left">
             <div className="profile-avatar">
-              <img src="#img" alt="profile" />
+              <img
+                src={user?.profileImage
+                  ? (user.profileImage.startsWith('http')
+                    ? user.profileImage
+                    : user.profileImage)
+                  : '/image/placeholder.jpg'}
+                alt="profile"
+              />
             </div>
             <div className="profile-info">
               <div className="profile-name">
@@ -107,7 +339,35 @@ export default function Account() {
               <div className="profile-email">
                 {user ? user.email : ''}
               </div>
-              <button className="edit-profile-btn">✏️ Edit Profile</button>
+              <label className="edit-profile-btn" style={{ cursor: 'pointer' }}>
+                Upload Photo
+                <input
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    try {
+                      const token = localStorage.getItem('token')
+                      const formData = new FormData()
+                      formData.append('image', file)
+                      const res = await fetch('/api/user/profile-image', {
+                        method: 'POST',
+                        headers: { Authorization: `Bearer ${token}` },
+                        body: formData
+                      })
+                      const data = await res.json()
+                      if (!res.ok) throw new Error(data?.message || 'Upload failed')
+                      setUser(data)
+                    } catch (err) {
+                      console.log(err)
+                    } finally {
+                      e.target.value = ''
+                    }
+                  }}
+                />
+              </label>
             </div>
           </div>
           <div className="profile-stats">
@@ -128,13 +388,245 @@ export default function Account() {
           </div>
         </div>
 
+        {/* Personal Information Form */}
+        {showPersonalForm && (
+          <form onSubmit={handleSave} style={{ margin: '20px 0', background: '#fff', padding: '18px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
+            <div style={{ fontSize: '16px', fontWeight: '700', marginBottom: '14px' }}>Personal Information</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#555' }}>
+                Name
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
+                />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#555' }}>
+                Email
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
+                />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#555' }}>
+                Phone
+                <input
+                  type="tel"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
+                />
+              </label>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '14px' }}>
+              <button type="submit" disabled={saving} style={{ padding: '10px 16px', borderRadius: '10px', border: 'none', background: '#2563EB', color: '#fff', fontWeight: '600', cursor: 'pointer' }}>
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+              {saveMsg && <span style={{ fontSize: '13px', color: saveMsg.includes('success') ? '#16a34a' : '#dc2626' }}>{saveMsg}</span>}
+            </div>
+          </form>
+        )}
+
+        {/* Address Form */}
+        {showAddressForm && (
+          <form onSubmit={handleSaveAddress} style={{ margin: '20px 0', background: '#fff', padding: '18px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
+            <div style={{ fontSize: '16px', fontWeight: '700', marginBottom: '14px' }}>Saved Address</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#555' }}>
+                Street
+                <input
+                  type="text"
+                  value={addressForm.street}
+                  onChange={(e) => setAddressForm({ ...addressForm, street: e.target.value })}
+                  style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
+                />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#555' }}>
+                City
+                <input
+                  type="text"
+                  value={addressForm.city}
+                  onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
+                  style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
+                />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#555' }}>
+                State
+                <input
+                  type="text"
+                  value={addressForm.state}
+                  onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })}
+                  style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
+                />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#555' }}>
+                Pincode
+                <input
+                  type="text"
+                  value={addressForm.pincode}
+                  onChange={(e) => setAddressForm({ ...addressForm, pincode: e.target.value })}
+                  style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
+                />
+              </label>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '14px' }}>
+              <button type="submit" disabled={saving} style={{ padding: '10px 16px', borderRadius: '10px', border: 'none', background: '#2563EB', color: '#fff', fontWeight: '600', cursor: 'pointer' }}>
+                {saving ? 'Saving...' : 'Save Address'}
+              </button>
+              {saveMsg && <span style={{ fontSize: '13px', color: saveMsg.includes('success') ? '#16a34a' : '#dc2626' }}>{saveMsg}</span>}
+            </div>
+          </form>
+        )}
+
+        {/* Payment Methods Form */}
+        {showPaymentForm && (
+          <form onSubmit={handleSavePayment} style={{ margin: '20px 0', background: '#fff', padding: '18px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
+            <div style={{ fontSize: '16px', fontWeight: '700', marginBottom: '14px' }}>Payment Methods</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#555' }}>
+                Card Holder Name
+                <input
+                  type="text"
+                  value={paymentForm.cardName}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, cardName: e.target.value })}
+                  style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
+                />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#555' }}>
+                Card Number
+                <input
+                  type="text"
+                  placeholder="**** **** **** 1234"
+                  value={paymentForm.cardNumber}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, cardNumber: e.target.value })}
+                  style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
+                />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#555' }}>
+                Expiry (MM/YY)
+                <input
+                  type="text"
+                  placeholder="MM/YY"
+                  value={paymentForm.cardExpiry}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, cardExpiry: e.target.value })}
+                  style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
+                />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#555' }}>
+                UPI ID
+                <input
+                  type="text"
+                  placeholder="name@bank"
+                  value={paymentForm.upiId}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, upiId: e.target.value })}
+                  style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
+                />
+              </label>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '14px' }}>
+              <button type="submit" disabled={saving} style={{ padding: '10px 16px', borderRadius: '10px', border: 'none', background: '#2563EB', color: '#fff', fontWeight: '600', cursor: 'pointer' }}>
+                {saving ? 'Saving...' : 'Save Payment'}
+              </button>
+              {saveMsg && <span style={{ fontSize: '13px', color: saveMsg.includes('success') ? '#16a34a' : '#dc2626' }}>{saveMsg}</span>}
+            </div>
+          </form>
+        )}
+
+        {/* Privacy & Security Form */}
+        {showPrivacyForm && (
+          <form onSubmit={handleSavePrivacy} style={{ margin: '20px 0', background: '#fff', padding: '18px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
+            <div style={{ fontSize: '16px', fontWeight: '700', marginBottom: '14px' }}>Privacy & Security</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#555' }}>
+                <input
+                  type="checkbox"
+                  checked={privacyForm.twoFactor}
+                  onChange={(e) => setPrivacyForm({ ...privacyForm, twoFactor: e.target.checked })}
+                />
+                Enable Two-Factor Authentication
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#555' }}>
+                <input
+                  type="checkbox"
+                  checked={privacyForm.loginAlerts}
+                  onChange={(e) => setPrivacyForm({ ...privacyForm, loginAlerts: e.target.checked })}
+                />
+                Login Alerts
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#555' }}>
+                Session Timeout (minutes)
+                <input
+                  type="number"
+                  min="5"
+                  value={privacyForm.sessionTimeout}
+                  onChange={(e) => setPrivacyForm({ ...privacyForm, sessionTimeout: e.target.value })}
+                  style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
+                />
+              </label>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '14px' }}>
+              <button type="submit" disabled={saving} style={{ padding: '10px 16px', borderRadius: '10px', border: 'none', background: '#2563EB', color: '#fff', fontWeight: '600', cursor: 'pointer' }}>
+                {saving ? 'Saving...' : 'Save Privacy'}
+              </button>
+              <button type="button" onClick={handleDeleteAccount} style={{ padding: '10px 16px', borderRadius: '10px', border: '1px solid #fecaca', background: '#fff', color: '#dc2626', fontWeight: '600', cursor: 'pointer' }}>
+                Delete Account
+              </button>
+              {saveMsg && <span style={{ fontSize: '13px', color: saveMsg.includes('success') ? '#16a34a' : '#dc2626' }}>{saveMsg}</span>}
+            </div>
+          </form>
+        )}
+
+        {showPrivacyForm && (
+          <form onSubmit={handleChangePassword} style={{ margin: '20px 0', background: '#fff', padding: '18px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
+            <div style={{ fontSize: '16px', fontWeight: '700', marginBottom: '14px' }}>Change Password</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#555' }}>
+                Current Password
+                <input
+                  type="password"
+                  value={passwordForm.current}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })}
+                  style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
+                />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#555' }}>
+                New Password
+                <input
+                  type="password"
+                  value={passwordForm.next}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, next: e.target.value })}
+                  style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
+                />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#555' }}>
+                Confirm New Password
+                <input
+                  type="password"
+                  value={passwordForm.confirm}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })}
+                  style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
+                />
+              </label>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '14px' }}>
+              <button type="submit" disabled={saving} style={{ padding: '10px 16px', borderRadius: '10px', border: 'none', background: '#111', color: '#fff', fontWeight: '600', cursor: 'pointer' }}>
+                {saving ? 'Updating...' : 'Update Password'}
+              </button>
+              {saveMsg && <span style={{ fontSize: '13px', color: saveMsg.includes('success') ? '#16a34a' : '#dc2626' }}>{saveMsg}</span>}
+            </div>
+          </form>
+        )}
+
         {/* Sections */}
         <div className="acc-sections">
           {accSections.map(section => (
             <div key={section.title} className="acc-section">
               <div className="acc-section-title">{section.title}</div>
               {section.items.map(item => (
-                <AccItem key={item.title} item={item} />
+                <AccItem key={item.title} item={item} onClick={item.onClick} />
               ))}
             </div>
           ))}
@@ -159,3 +651,4 @@ export default function Account() {
     </div>
   )
 }
+

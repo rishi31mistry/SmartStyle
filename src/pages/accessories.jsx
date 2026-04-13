@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/navbar'
 import '../styles/common.css'
@@ -8,38 +8,92 @@ export default function Accessories() {
   const navigate = useNavigate()
   const [wishlist, setWishlist] = useState([])
 
-  const toggleWishlist = (id) => {
-    setWishlist(prev => prev.includes(id) ? prev.filter(w => w !== id) : [...prev, id])
+  const parsePrice = (val) => {
+    if (val == null) return 0
+    const num = String(val).replace(/[^\d.]/g, '')
+    return num ? Number(num) : 0
   }
 
+  const fetchWishlist = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) return
+      const res = await fetch('/api/wishlist', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const data = await res.json()
+      const ids = Array.isArray(data) ? data.map(i => String(i.productId)) : []
+      setWishlist(ids)
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  const toggleWishlist = async (p) => {
+    const token = localStorage.getItem('token')
+    if (!token) { navigate('/login'); return }
+
+    const pid = String(p.id)
+    try {
+      if (wishlist.includes(pid)) {
+        await fetch(`/api/wishlist/remove/${pid}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        setWishlist(prev => prev.filter(id => id !== pid))
+      } else {
+        await fetch('/api/wishlist/add', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            productId: pid,
+            name: p.name,
+            price: parsePrice(p.price),
+            image: p.img
+          })
+        })
+        setWishlist(prev => [...prev, pid])
+      }
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  useEffect(() => {
+    fetchWishlist()
+  }, [])
+
   const menCategories = [
-    { name: 'Watches', count: 312 ,img: '/image/accessories/men/watch/d3.jpg'},
-    { name: 'Wallets', count: 245  ,img: '/image/accessories/men/wallet/d1.jpg'},
-    { name: 'Belts', count: 189 ,img: '/image/accessories/men/belt/d1.jpg'},
-    { name: 'Sunglasses', count: 267 ,img: '/image/accessories/men/sunglasses/d1.jpg'},
-    { name: 'Caps ', count: 198 ,img: '/image/accessories/men/hat/d2.jpg' },
-    { name: 'Ties ', count: 134,img: '/image/accessories/men/ties/d1.jpg' },
-    { name: 'Cufflinks', count: 87 ,img: '/image/accessories/men/cufflinks/d1.jpg'},
-    { name: 'Bags & Backpacks', count: 156 ,img: '/image/accessories/men/bag/d1.jpg' },
-    { name: 'Keychains', count: 112 ,img: '/image/accessories/men/keychains/d1.jpg' },
-    { name: 'Bracelets', count: 143 ,img: '/image/accessories/men/bracelet/d1.jpg'},
-    { name: 'Trimmer', count: 98 ,img: '/image/accessories/men/trimmer/d1.jpg' },
-    { name: 'Perfumes', count: 221 ,img: '/image/accessories/men/perfumes/d1.jpg' },
+    { name: 'Watches', img: '/image/accessories/men/watch/d3.jpg'},
+    { name: 'Wallets' ,img: '/image/accessories/men/wallet/d1.jpg'},
+    { name: 'Belts', img: '/image/accessories/men/belt/d1.jpg'},
+    { name: 'Sunglasses', img: '/image/accessories/men/sunglasses/d1.jpg'},
+    { name: 'Caps & Hats',img: '/image/accessories/men/hat/d2.jpg' },
+    { name: 'Ties', img: '/image/accessories/men/ties/d1.jpg' },
+    { name: 'Cufflinks', img: '/image/accessories/men/cufflinks/d1.jpg'},
+    { name: 'Bags & Backpacks', img: '/image/accessories/men/bag/d1.jpg' },
+    { name: 'Keychains', img: '/image/accessories/men/keychains/d1.jpg' },
+    { name: 'Bracelets',img: '/image/accessories/men/bracelet/d1.jpg'},
+    { name: 'Trimmer', img: '/image/accessories/men/trimmer/d1.jpg' },
+    { name: 'Perfumes', img: '/image/accessories/men/perfumes/d1.jpg' },
   ]
 
   const womenCategories = [
-    { name: 'Handbags', count: 423 ,img: '/image/accessories/women/bags/d1.jpg' },
-    { name: 'Jewellery', count: 567 ,img: '/image/accessories/women/jewellery/d1.jpg'},
-    { name: 'Watches', count: 234 ,img: '/image/accessories/women/watch/d1.jpg' },
-    { name: 'Sunglasses', count: 312 ,img: '/image/accessories/women/sunglasses/d1.jpg'  },
-    { name: 'Scarves & Stoles', count: 189 ,img: '/image/accessories/women/scarf/d2.jpg' },
-    { name: 'Hair Accessories', count: 345  ,img: '/image/accessories/women/hair/d1.jpg' },
-    { name: 'Earrings', count: 489 ,img: '/image/accessories/women/earrings/d1.jpg'},
-    { name: 'Necklaces', count: 378  ,img: '/image/accessories/women/necklace/d1.jpg'},
-    { name: 'Bangles & Bracelets', count: 456 ,img: '/image/accessories/women/bangle/d1.jpg' },
-    { name: 'Clutches', count: 167 ,img: '/image/accessories/women/clutche/d1.jpg'},
-    { name: 'Rings', count: 234 ,img: '/image/accessories/women/ring/d1.jpg'},
-    { name: 'Perfumes', count: 198 ,img: '/image/accessories/women/perfume/d1.jpg'},
+    { name: 'Handbags', img: '/image/accessories/women/bags/d1.jpg' },
+    { name: 'Jewellery',img: '/image/accessories/women/jewellery/d1.jpg'},
+    { name: 'Watches', img: '/image/accessories/women/watch/d1.jpg' },
+    { name: 'Sunglasses', img: '/image/accessories/women/sunglasses/d1.jpg'  },
+    { name: 'Scarves & Stoles',img: '/image/accessories/women/scarf/d2.jpg' },
+    { name: 'Hair Accessories', img: '/image/accessories/women/hair/d1.jpg' },
+    { name: 'Earrings', img: '/image/accessories/women/earrings/d1.jpg'},
+    { name: 'Necklaces', img: '/image/accessories/women/necklace/d1.jpg'},
+    { name: 'Bangles', img: '/image/accessories/women/bangle/d1.jpg' },
+    { name: 'Clutches', img: '/image/accessories/women/clutche/d1.jpg'},
+    { name: 'Rings',img: '/image/accessories/women/ring/d1.jpg'},
+    { name: 'Perfumes', img: '/image/accessories/women/perfume/d1.jpg'},
   ]
 
   const dealsOfDay = [
@@ -82,8 +136,8 @@ export default function Accessories() {
     <div className="product-card">
       <div className="product-img-wrap" style={{ height: '250px' }}>
         <img src={product.img} alt={product.name} />
-        <button className="wishlist-btn" onClick={() => toggleWishlist(product.id)}>
-          <svg width="16" height="16" fill={wishlist.includes(product.id) ? '#FF4B4B' : 'none'} stroke={wishlist.includes(product.id) ? '#FF4B4B' : '#fff'} strokeWidth="2" viewBox="0 0 24 24">
+        <button className="wishlist-btn" onClick={() => toggleWishlist(product)}>
+          <svg width="16" height="16" fill={wishlist.includes(String(product.id)) ? '#FF4B4B' : 'none'} stroke={wishlist.includes(String(product.id)) ? '#FF4B4B' : '#fff'} strokeWidth="2" viewBox="0 0 24 24">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
           </svg>
         </button>
@@ -135,7 +189,6 @@ export default function Accessories() {
             >
               <div className="cat-img"><img src={cat.img} alt={cat.name} /></div>
               <div className="cat-name">{cat.name}</div>
-              <div className="cat-count">{cat.count} items</div>
             </div>
           ))}
         </div>
@@ -161,7 +214,6 @@ export default function Accessories() {
             >
               <div className="cat-img"><img src={cat.img} alt={cat.name} /></div>
               <div className="cat-name">{cat.name}</div>
-              <div className="cat-count">{cat.count} items</div>
             </div>
           ))}
         </div>
@@ -183,8 +235,8 @@ export default function Accessories() {
             <div key={p.id} className="product-card">
               <div className="product-img-wrap" style={{ height: '250px' }}>
                 <img src={p.img} alt={p.name} />
-                <button className="wishlist-btn" onClick={() => toggleWishlist(p.id)}>
-                  <svg width="16" height="16" fill={wishlist.includes(p.id) ? '#FF4B4B' : 'none'} stroke={wishlist.includes(p.id) ? '#FF4B4B' : '#fff'} strokeWidth="2" viewBox="0 0 24 24">
+                <button className="wishlist-btn" onClick={() => toggleWishlist(p)}>
+                  <svg width="16" height="16" fill={wishlist.includes(String(p.id)) ? '#FF4B4B' : 'none'} stroke={wishlist.includes(String(p.id)) ? '#FF4B4B' : '#fff'} strokeWidth="2" viewBox="0 0 24 24">
                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                   </svg>
                 </button>
@@ -239,3 +291,4 @@ export default function Accessories() {
     </div>
   )
 }
+

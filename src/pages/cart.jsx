@@ -23,7 +23,7 @@ export default function Cart() {
   const fetchCart = async () => {
     try {
       const token = localStorage.getItem('token')
-      const res = await fetch('http://localhost:5000/api/cart', {
+      const res = await fetch('/api/cart', {
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
@@ -39,7 +39,7 @@ export default function Cart() {
     if (quantity < 1) return
     try {
       const token = localStorage.getItem('token')
-      const res = await fetch(`http://localhost:5000/api/cart/update/${productId}`, {
+      const res = await fetch(`/api/cart/update/${productId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -58,13 +58,13 @@ export default function Cart() {
     try {
       const token = localStorage.getItem('token')
       // remove old size item
-      await fetch(`http://localhost:5000/api/cart/remove/${productId}?size=${oldSize}`, {
+      await fetch(`/api/cart/remove/${productId}?size=${oldSize}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       })
       // add with new size
       const item = cart.find(i => i.productId === productId && i.size === oldSize)
-      const res = await fetch('http://localhost:5000/api/cart/add', {
+      const res = await fetch('/api/cart/add', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -83,7 +83,7 @@ export default function Cart() {
     try {
       const token = localStorage.getItem('token')
       const res = await fetch(
-        `http://localhost:5000/api/cart/remove/${productId}?size=${size}`,
+        `/api/cart/remove/${productId}?size=${size}`,
         {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` }
@@ -257,7 +257,7 @@ export default function Cart() {
 
               <button
                 style={styles.checkoutBtn}
-                onClick={() => navigate('/checkout')}
+                onClick={() => navigate('/checkout', { state: { items: cart } })}
               >
                 Proceed to Checkout →
               </button>
@@ -381,3 +381,4 @@ const styles = {
     cursor: 'pointer', marginTop: '8px'
   }
 }
+

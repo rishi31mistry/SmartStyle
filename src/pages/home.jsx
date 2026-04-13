@@ -8,6 +8,65 @@ export default function Home() {
   const navigate = useNavigate()
   const [currentSlide, setCurrentSlide] = useState(0)
   const [hoveredNav, setHoveredNav] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  // ✅ Wishlist ids from server
+  const [wishlist, setWishlist] = useState([])
+
+  // Dynamic product states
+  const [newItems, setNewItems] = useState([])
+  const [flashSaleItems, setFlashSaleItems] = useState([])
+  const [mostPopular, setMostPopular] = useState([])
+  const [justForYou, setJustForYou] = useState([])
+  const [dealsOfDay, setDealsOfDay] = useState([])
+  const [summerItems, setSummerItems] = useState([])
+
+  const fetchWishlist = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) return
+      const res = await fetch('/api/wishlist', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const data = await res.json()
+      const ids = Array.isArray(data) ? data.map(i => i.productId) : []
+      setWishlist(ids)
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  const toggleWishlist = async (p) => {
+    const token = localStorage.getItem('token')
+    if (!token) { navigate('/login'); return }
+
+    try {
+      if (wishlist.includes(p._id)) {
+        await fetch(`/api/wishlist/remove/${p._id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        setWishlist(prev => prev.filter(id => id !== p._id))
+      } else {
+        await fetch('/api/wishlist/add', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            productId: p._id,
+            name: p.name,
+            price: p.price,
+            image: p.image
+          })
+        })
+        setWishlist(prev => [...prev, p._id])
+      }
+    } catch (err) {
+      console.log(err)
+    }
+  }
 
   const navItems = [
     { label: 'Men', path: '/products/men' },
@@ -17,18 +76,148 @@ export default function Home() {
   ]
 
   const specialItems = [
-    { label: 'Custom Outfit', isNew: true },
-    { label: 'Moody Outfits', isNew: true },
+    { label: 'Custom Outfit', isNew: true, path: '/custom-outfit'  },
+    { label: 'Moody Outfits', isNew: true, path: '/products/moodyoutfits' },
   ]
 
   const slides = [
-    { title: 'Summer Sale', desc: 'Up to 60% off on all categories', tag: 'Shop Now →', bg: 'linear-gradient(120deg, #1565C0, #42a5f5)' , img: '/image/sale/summer2.jpg' },
-    { title: 'New Arrivals', desc: 'Fresh styles just dropped', tag: 'Explore Now →', bg: 'linear-gradient(120deg, #E91E8C, #f472b6)' , img: '/image/sale/arrival.jpg'},
-    { title: 'Top Brands', desc: 'Nike, Adidas, Zara & more', tag: 'View All →', bg: 'linear-gradient(120deg, #6a1b9a, #9c27b0)', img: '/image/sale/top.jpg' },
-    { title: 'Festive Picks', desc: 'Look your best this season', tag: 'Shop Now →', bg: 'linear-gradient(120deg, #e65100, #f57c00)', img: '/image/sale/festival.jpg' },
-    { title: 'Flash Sale', desc: 'Hurry! Limited time offers', tag: 'Grab Now →', bg: 'linear-gradient(120deg, #b71c1c, #e53935)', img: '/image/sale/flash.jpg' },
+    { title: 'Summer Sale', desc: 'Up to 60% off on all categories', tag: 'Shop Now →', bg: 'linear-gradient(120deg, #1565C0, #42a5f5)', img: '/image/sale/summer2.jpg', path: '/products/summer-special' },
+    { title: 'New Arrivals', desc: 'Fresh styles just dropped', tag: 'Explore Now →', bg: 'linear-gradient(120deg, #E91E8C, #f472b6)', img: '/image/sale/arrival.jpg', path: '/products/new' },
+    { title: 'Most Popular', desc: 'Look your best this season', tag: 'Shop Now →', bg: 'linear-gradient(120deg, #e65100, #f57c00)', img: '/image/sale/most.jpg', path: '/products/most-popular' },
+    { title: 'Flash Sale', desc: 'Hurry! Limited time offers', tag: 'Grab Now →', bg: 'linear-gradient(120deg, #b71c1c, #e53935)', img: '/image/sale/flash.jpg', path: '/products/flash-sale' },
   ]
 
+  const categories = [
+    { name: "Men's Fashion", count: 1240, path: 'men', imgs: ['/image/men/jeans/p5.jpg', '/image/men/t-shirt/t10.jpg'] },
+    { name: "Women's Fashion", count: 2340, path: 'women', imgs: ['/image/women/dress/d1.jpg', '/image/women/top/d2.jpg'] },
+    { name: 'Footwear', count: 980, path: 'footwear', imgs: ['/image/footwear/men/sports shoes/d6.jpg', '/image/footwear/women/heels/d1.jpg'] },
+    { name: 'Accessories', count: 760, path: 'accessories', imgs: ['/image/accessories/men/belt/d1.jpg', '/image/accessories/men/watch/d3.jpg'] },
+    {
+      name: 'Sportswear',
+      count: 540,
+      path: 'men',
+      imgs: [
+        { src: '/image/men/sport/d5.jpg', path: '/products/men' },
+        { src: '/image//women/sport/d4.jpg', path: '/products/women' }
+      ]
+    },
+    {
+      name: 'Ethnic Wear',
+      count: 890,
+      path: 'women',
+      imgs: [
+        { src: '/image/men/ethnic/d3.jpg', path: '/products/men' },
+        { src: '/image/women/ethnic/d2.jpg', path: '/products/women' }
+      ]
+    },
+  ]
+
+  // Fetch all product sections (dedupe across grids)
+  useEffect(() => {
+    fetchWishlist()
+    const BASE = '/api/products'
+
+    const genders = ['Men', 'Women', 'Footwear', 'Accessories']
+    const fetchByGender = (query) =>
+      Promise.all(genders.map(g => fetch(`${BASE}?gender=${encodeURIComponent(g)}&${query}`).then(r => r.json())))
+        .then(results => results.flat())
+
+    const reqs = [
+      fetchByGender('tag=New&limit=12'),       // New Items
+      fetchByGender('tag=Sale&limit=12'),      // Flash Sale
+      fetchByGender('sort=popular&limit=12'),  // Most Popular
+      fetchByGender('limit=12'),               // Just For You
+      fetchByGender('tag=Sale&limit=12'),      // Deals of Day
+      fetchByGender('tag=Trending&limit=12'),  // Summer Special
+    ]
+
+    Promise.all(reqs)
+      .then(([newData, saleData, popularData, justData, dealsData, summerData]) => {
+        const used = new Set()
+        const usedImages = new Set()
+        const pickUnique = (list, limit) => {
+          const out = []
+          for (const p of list || []) {
+            if (!p || used.has(p._id)) continue
+            const imgKey = (p.image || '').trim()
+            if (imgKey && usedImages.has(imgKey)) continue
+            used.add(p._id)
+            if (imgKey) usedImages.add(imgKey)
+            out.push(p)
+            if (out.length >= limit) break
+          }
+          return out
+        }
+
+        const mixByGender = (list) => {
+          const buckets = {
+            Men: [],
+            Women: [],
+            Footwear: [],
+            Accessories: []
+          }
+          for (const p of list || []) {
+            if (!p) continue
+            const g = p.gender
+            if (buckets[g]) buckets[g].push(p)
+            else buckets.Men.push(p)
+          }
+          const out = []
+          const keys = ['Men', 'Women', 'Footwear', 'Accessories']
+          let added = true
+          while (added) {
+            added = false
+            for (const k of keys) {
+              if (buckets[k].length > 0) {
+                out.push(buckets[k].shift())
+                added = true
+              }
+            }
+          }
+          return out
+        }
+
+        const allPool = [
+          ...(newData || []),
+          ...(saleData || []),
+          ...(popularData || []),
+          ...(justData || []),
+          ...(dealsData || []),
+          ...(summerData || []),
+        ]
+        const fillFromPool = (list, limit) => {
+          const out = [...list]
+          if (out.length >= limit) return out
+          for (const p of allPool) {
+            if (!p || used.has(p._id)) continue
+            const imgKey = (p.image || '').trim()
+            if (imgKey && usedImages.has(imgKey)) continue
+            used.add(p._id)
+            if (imgKey) usedImages.add(imgKey)
+            out.push(p)
+            if (out.length >= limit) break
+          }
+          return out
+        }
+
+        const newItemsPicked = pickUnique(mixByGender(newData), 8)
+        const flashPicked = pickUnique(mixByGender(saleData), 6)
+        const popularPicked = pickUnique(mixByGender(popularData), 8)
+        const justPicked = pickUnique(mixByGender(justData), 8)
+        const dealsPicked = pickUnique(mixByGender(dealsData), 8)
+        const summerPicked = pickUnique(mixByGender(summerData), 8)
+
+        setNewItems(fillFromPool(newItemsPicked, 8))
+        setFlashSaleItems(fillFromPool(flashPicked, 6))
+        setMostPopular(fillFromPool(popularPicked, 8))
+        setJustForYou(fillFromPool(justPicked, 8))
+        setDealsOfDay(fillFromPool(dealsPicked, 8))
+        setSummerItems(fillFromPool(summerPicked, 8))
+      })
+      .catch(console.log)
+  }, [])
+
+  // Carousel auto-slide
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide(prev => (prev + 1) % slides.length)
@@ -36,70 +225,49 @@ export default function Home() {
     return () => clearInterval(timer)
   }, [slides.length])
 
-  const categories = [
-    { name: "Men's Fashion", count: 1240, path: 'men', imgs: ['/image/men/jeans/p5.jpg', '/image/men/t-shirt/t10.jpg'] },
-    { name: "Women's Fashion", count: 2340, path: 'women', imgs: ['/image/women/dress/d1.jpg', '/image/women/top/d2.jpg' ] },
-    { name: 'Footwear', count: 980, path: 'footwear', imgs: ['/image/footwear/men/sports shoes/d6.jpg', '/image/footwear/women/heels/d1.jpg' ] },
-    { name: 'Accessories', count: 760, path: 'accessories', imgs: ['/image/accessories/men/belt/d1.jpg', '/image/accessories/men/watch/d3.jpg',] },
-    { name: 'Sportswear', count: 540, path: 'men', imgs: ['/image/men/sport/d5.jpg', '/image//women/sport/d4.jpg'] },
-    { name: 'Ethnic Wear', count: 890, path: 'women', imgs: ['/image/men/ethnic/d3.jpg', '/image/women/ethnic/d2.jpg'] },
-  ]
+  const tagColors = {
+    Hot: '#F5A623', New: '#4A90D9',
+    Trending: '#E91E8C', Sale: '#FF4B4B',
+    Bestseller: '#00897B', Popular: '#00897B'
+  }
 
-  const newItems = [
-    { id: 1, name: 'Oversized Hoodie', price: '₹1,299', img:'/image/men/oversized/d1.jpg' },
-    { id: 2, name: 'Floral Midi Dress', price: '₹1,499',img:'/image/women/dress/d1.jpg' },
-    { id: 3, name: 'Chunky Sneakers', price: '₹2,199' ,img:'/image/footwear/men/sneakers/d1.jpg'},
-    { id: 4, name: 'Leather Tote Bag', price: '₹1,799',img:'/image/accessories/women/bags/d1.jpg' },
-    { id: 5, name: 'Linen Co-ord Set', price: '₹1,899',img:'/image/men/full/d1.jpg' },
-    { id: 6, name: 'Retro Sunglasses', price: '₹899',img:'/image/accessories/women/sunglasses/d1.jpg' },
-    { id: 7, name: 'Cargo Pants', price: '₹1,499' ,img:'/image/men/trouser/d1.jpg'},
-    { id: 8, name: 'Silk Scarf', price: '₹699',img:'/image/accessories/women/scarf/d1.jpg' },
-  ]
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+    }
+  }
 
-  const flashSale = [
-    { id: 1, discount: '70%',img:'/image/sale/s1.jpg'},
-    { id: 2, discount: '65%',img:'/image/sale/s2.jpg' },
-    { id: 3, discount: '60%',img:'/image/sale/s3.jpg' },
-    { id: 4, discount: '55%',img:'/image/sale/s4.jpg' },
-    { id: 5, discount: '50%',img:'/image/sale/s5.jpg' },
-    { id: 6, discount: '45%',img:'/image/sale/s6.jpg' },
-  ]
-
-  const mostPopular = [
-    { id: 1, name: 'Classic White Tee', likes: '2.4k', tag: 'Hot', tagColor: '#F5A623',img:'/image/men/t-shirt/t2.jpg' },
-    { id: 2, name: 'Boho Maxi Dress', likes: '1.8k', tag: 'Trending', tagColor: '#E91E8C',img:'/image/women/dress/d3.jpg' },
-    { id: 3, name: 'Air Max Sneakers', likes: '3.1k', tag: 'Popular', tagColor: '#00897B',img:'/image/footwear/men/sneakers/d2.jpg' },
-    { id: 4, name: 'Denim Jacket', likes: '2.2k', tag: 'New', tagColor: '#4A90D9',img:'/image/women/jacket/d1.jpg' },
-  ]
-
-  const justForYou = [
-    { id: 1, name: 'Summer Kurta', price: '₹899',img:'/image/women/kurta/d2.jpg' },
-    { id: 2, name: 'Wrap Dress', price: '₹1,299' ,img:'/image/women/dress/d5.jpg' },
-    { id: 3, name: 'Slim Fit Chinos', price: '₹1,199' ,img:'/image/men/jeans/p3.jpg'},
-    { id: 4, name: 'Block Heel Sandals', price: '₹999',img:'/image/footwear/women/heels/d2.jpg' },
-    { id: 5, name: 'Printed Shirt', price: '₹799',img:'/image/men/shirt/s2.jpg' },
-    { id: 6, name: 'Co-ord Set', price: '₹1,699',img:'/image/men/full/d2.jpg'  },
-    { id: 7, name: 'Canvas Sneakers', price: '₹1,499',img:'/image/footwear/men/sneakers/d3.jpg' },
-    { id: 8, name: 'Crossbody Bag', price: '₹1,299' ,img:'/image/accessories/women/bags/d2.jpg' },
-  ]
-
-  const dealsOfDay = [
-    { id: 1, name: 'Formal Blazer', price: '₹1,999', originalPrice: '₹3,999', discount: '50%',img:'/image/men/suit/d1.jpg' },
-    { id: 2, name: 'Silk Saree', price: '₹2,499', originalPrice: '₹4,999', discount: '50%',img:'/image/women/saree/d1.jpg'  },
-    { id: 3, name: 'Running Shoes', price: '₹1,499', originalPrice: '₹2,999', discount: '50%',img:'/image/footwear/men/sneakers/d4.jpg' },
-    { id: 4, name: 'Leather Watch', price: '₹1,999', originalPrice: '₹3,999', discount: '50%',img:'/image/accessories/men/watch/d3.jpg' },
-  ]
-
-  const summerItems = [
-    { id: 1, name: 'Linen Shirt', price: '₹999',img:'/image/men/shirt/s3.jpg'  },
-    { id: 2, name: 'Floral Dress', price: '₹1,299',img:'/image/women/dress/d6.jpg' },
-    { id: 3, name: 'Shorts', price: '₹699',img:'/image/men/short/d1.jpg' },
-    { id: 4, name: 'Straw Hat', price: '₹499' ,img:'/image/accessories/men/hat/d1.jpg' },
-    { id: 5, name: 'Sandals', price: '₹799' ,img:'/image/footwear/women/sandals/d1.jpg' },
-    { id: 6,name: 'Slip Dress', price: '₹1,199',img:'/image/women/dress/d7.jpg'},
-    { id: 7, name: 'Ladies Hat', price: '₹1,099' ,img:'/image/accessories/women/hat/d1.jpg' },
-    { id: 8, name: 'Sunglasses', price: '₹899',img:'/image/accessories/men/sunglasses/d1.jpg' },
-  ]
+  // ✅ HomeProductCard now has the wishlist heart button from men.jsx
+  const HomeProductCard = ({ p }) => (
+    <div
+      className="home-product-card"
+      onClick={() => navigate(`/product/${p._id}`)}
+      style={{ cursor: 'pointer' }}
+    >
+      <div className="home-product-img" style={{ position: 'relative' }}>
+        <img src={p.image} alt={p.name} />
+        {/* ✅ Wishlist button — exact same code as men.jsx */}
+        <button
+          className="wishlist-btn"
+          onClick={(e) => { e.stopPropagation(); toggleWishlist(p) }}
+        >
+          <svg width="16" height="16"
+            fill={wishlist.includes(p._id) ? '#FF4B4B' : 'none'}
+            stroke={wishlist.includes(p._id) ? '#FF4B4B' : '#fff'}
+            strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </button>
+        {p.tag && (
+          <span className="product-tag" style={{ background: tagColors[p.tag] || '#00897B' }}>
+            {p.tag}
+          </span>
+        )}
+      </div>
+      <div className="home-product-name">{p.name}</div>
+      <div className="home-product-price">₹{p.price.toLocaleString('en-IN')}</div>
+    </div>
+  )
 
   return (
     <div className="page">
@@ -109,40 +277,62 @@ export default function Home() {
 
         {/* Topbar */}
         <div className="topbar">
-        <div className="topbar-row-one">
+          <div className="topbar-row-one">
             <div className="topbar-title">Shop</div>
             <div className="search-bar">
-            <svg width="16" height="16" fill="none" stroke="#aaa" strokeWidth="2" viewBox="0 0 24 24">
+              <svg
+                width="16" height="16" fill="none" stroke="#aaa" strokeWidth="2"
+                viewBox="0 0 24 24" onClick={handleSearch}
+                style={{ cursor: 'pointer', flexShrink: 0 }}
+              >
                 <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-            </svg>
-            <input className="search-input" placeholder="Search..." />
+              </svg>
+              <input
+                className="search-input"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSearch()
+                }}
+              />
+              {searchQuery && (
+                <svg
+                  onClick={() => setSearchQuery('')}
+                  width="14" height="14" fill="none" stroke="#aaa" strokeWidth="2"
+                  viewBox="0 0 24 24" style={{ cursor: 'pointer', flexShrink: 0 }}
+                >
+                  <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+              )}
             </div>
-        </div>
-        <div className="cat-nav">
+          </div>
+          <div className="cat-nav">
             {navItems.map(item => (
-            <div
+              <div
                 key={item.label}
                 className={`cat-nav-item ${hoveredNav === item.label ? 'cat-nav-item-active' : ''}`}
                 onMouseEnter={() => setHoveredNav(item.label)}
                 onMouseLeave={() => setHoveredNav(null)}
                 onClick={() => navigate(item.path)}
-            >
+              >
                 {item.label}
-            </div>
+              </div>
             ))}
             <div className="cat-nav-special-wrap">
-            {specialItems.map(item => (
+              {specialItems.map(item => (
                 <div
-                key={item.label}
-                className={`cat-nav-item cat-nav-item-special ${hoveredNav === item.label ? 'cat-nav-item-active' : ''}`}
-                onMouseEnter={() => setHoveredNav(item.label)}
-                onMouseLeave={() => setHoveredNav(null)}
+                  key={item.label}
+                  className={`cat-nav-item cat-nav-item-special ${hoveredNav === item.label ? 'cat-nav-item-active' : ''}`}
+                  onMouseEnter={() => setHoveredNav(item.label)}
+                  onMouseLeave={() => setHoveredNav(null)}
+                  onClick={() => navigate(item.path)}
                 >
-                {item.label} {item.isNew && <span className="new-badge">NEW</span>}
+                  {item.label} {item.isNew && <span className="new-badge">NEW</span>}
                 </div>
-            ))}
+              ))}
             </div>
-        </div>
+          </div>
         </div>
 
         {/* Carousel */}
@@ -158,15 +348,18 @@ export default function Home() {
               <div
                 key={i}
                 className="home-slide"
-                style={{
-                  width: `${100 / slides.length}%`,
-                  background: slide.bg,
-                }}
+                style={{ width: `${100 / slides.length}%`, background: slide.bg }}
               >
                 <div className="slide-text">
                   <div className="slide-title">{slide.title}</div>
                   <div className="slide-desc">{slide.desc}</div>
-                  <div className="slide-tag">{slide.tag}</div>
+                  <div
+                    className="slide-tag"
+                    onClick={() => navigate(slide.path)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {slide.tag}
+                  </div>
                 </div>
                 <div className="slide-img">
                   <img src={slide.img} alt={slide.title} />
@@ -174,27 +367,17 @@ export default function Home() {
               </div>
             ))}
           </div>
-
-          <button
-            className="carousel-btn"
-            style={{ left: '12px' }}
-            onClick={() => setCurrentSlide(prev => (prev - 1 + slides.length) % slides.length)}
-          >
+          <button className="carousel-btn" style={{ left: '12px' }}
+            onClick={() => setCurrentSlide(prev => (prev - 1 + slides.length) % slides.length)}>
             <svg width="16" height="16" fill="none" stroke="#fff" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
-          <button
-            className="carousel-btn"
-            style={{ right: '12px' }}
-            onClick={() => setCurrentSlide(prev => (prev + 1) % slides.length)}
-          >
+          <button className="carousel-btn" style={{ right: '12px' }}
+            onClick={() => setCurrentSlide(prev => (prev + 1) % slides.length)}>
             <svg width="16" height="16" fill="none" stroke="#fff" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
           </button>
-
           <div className="carousel-dots">
             {slides.map((_, i) => (
-              <div
-                key={i}
-                onClick={() => setCurrentSlide(i)}
+              <div key={i} onClick={() => setCurrentSlide(i)}
                 className={`carousel-dot ${i === currentSlide ? 'carousel-dot-active' : ''}`}
                 style={{ width: i === currentSlide ? '22px' : '8px' }}
               />
@@ -214,8 +397,18 @@ export default function Home() {
             <div key={cat.name} className="home-cat-card" onClick={() => navigate(`/products/${cat.path}`)}>
               <div className="home-cat-img-wrap">
                 {cat.imgs.map((img, i) => (
-                  <div key={i} className="home-cat-img">
-                    <img src={img} alt={cat.name} />
+                  <div
+                    key={i}
+                    className="home-cat-img"
+                    onClick={(e) => {
+                      if (typeof img === 'object' && img.path) {
+                        e.stopPropagation()
+                        navigate(img.path)
+                      }
+                    }}
+                    style={{ cursor: typeof img === 'object' && img.path ? 'pointer' : 'default' }}
+                  >
+                    <img src={typeof img === 'object' ? img.src : img} alt={cat.name} />
                   </div>
                 ))}
               </div>
@@ -236,15 +429,7 @@ export default function Home() {
           </span>
         </div>
         <div className="product-grid">
-          {newItems.map(p => (
-            <div key={p.id} className="home-product-card">
-              <div className="home-product-img">
-                <img src={p.img} alt={p.name} />
-              </div>
-              <div className="home-product-name">{p.name}</div>
-              <div className="home-product-price">{p.price}</div>
-            </div>
-          ))}
+          {newItems.map(p => <HomeProductCard key={p._id} p={p} />)}
         </div>
 
         <div className="divider" />
@@ -253,7 +438,9 @@ export default function Home() {
         <div className="flash-header">
           <h2 className="section-title">⚡ Flash Sale</h2>
           <div className="countdown">
-            <svg width="16" height="16" fill="none" stroke="#555" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            <svg width="16" height="16" fill="none" stroke="#555" strokeWidth="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+            </svg>
             02:45:30
           </div>
           <span className="see-all" onClick={() => navigate('/products/flash-sale')}>
@@ -261,10 +448,19 @@ export default function Home() {
           </span>
         </div>
         <div className="flash-grid">
-          {flashSale.map(p => (
-            <div key={p.id} className="flash-card">
-             <img src={p.img} alt="flash" />
-              <span className="flash-badge">-{p.discount}</span>
+          {flashSaleItems.map(p => (
+            <div
+              key={p._id}
+              className="flash-card"
+              onClick={() => navigate(`/product/${p._id}`)}
+              style={{ cursor: 'pointer' }}
+            >
+              <img src={p.image} alt={p.name} />
+              <span className="flash-badge">
+                {p.originalPrice > 0
+                  ? `-${Math.round((p.originalPrice - p.price) / p.originalPrice * 100)}%`
+                  : 'Sale'}
+              </span>
             </div>
           ))}
         </div>
@@ -280,13 +476,31 @@ export default function Home() {
         </div>
         <div className="popular-grid">
           {mostPopular.map(p => (
-            <div key={p.id} className="popular-card">
-              <div className="popular-img">
-                <img src={p.img} alt={p.name} />
+            <div
+              key={p._id}
+              className="popular-card"
+              onClick={() => navigate(`/product/${p._id}`)}
+              style={{ cursor: 'pointer' }}
+            >
+              <div className="popular-img" style={{ position: 'relative' }}>
+                <img src={p.image} alt={p.name} />
+                <button
+                  className="wishlist-btn"
+                  onClick={(e) => { e.stopPropagation(); toggleWishlist(p) }}
+                >
+                  <svg width="16" height="16"
+                    fill={wishlist.includes(p._id) ? '#FF4B4B' : 'none'}
+                    stroke={wishlist.includes(p._id) ? '#FF4B4B' : '#fff'}
+                    strokeWidth="2" viewBox="0 0 24 24">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  </svg>
+                </button>
               </div>
               <div className="popular-meta">
-                <span className="popular-likes">♥ {p.likes}</span>
-                <span className="popular-tag" style={{ background: p.tagColor }}>{p.tag}</span>
+                <span className="popular-likes">★ {p.rating}</span>
+                <span className="popular-tag" style={{ background: tagColors[p.tag] || '#00897B' }}>
+                  {p.tag}
+                </span>
               </div>
               <div className="home-product-name">{p.name}</div>
             </div>
@@ -303,15 +517,7 @@ export default function Home() {
           </span>
         </div>
         <div className="product-grid">
-          {justForYou.map(p => (
-            <div key={p.id} className="home-product-card">
-              <div className="home-product-img">
-                <img src={p.img} alt={p.name} />
-              </div>
-              <div className="home-product-name">{p.name}</div>
-              <div className="home-product-price">{p.price}</div>
-            </div>
-          ))}
+          {justForYou.map(p => <HomeProductCard key={p._id} p={p} />)}
         </div>
 
         <div className="divider" />
@@ -328,15 +534,42 @@ export default function Home() {
         </div>
         <div className="product-grid">
           {dealsOfDay.map(p => (
-            <div key={p.id} className="home-product-card">
+            <div
+              key={p._id}
+              className="home-product-card"
+              onClick={() => navigate(`/product/${p._id}`)}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="home-product-img" style={{ position: 'relative' }}>
-                <img src={p.img} alt={p.name} />
-                <span className="product-tag" style={{ background: '#FF4B4B' }}>-{p.discount}</span>
+                <img src={p.image} alt={p.name} />
+                {/* ✅ Wishlist button on deals cards too */}
+                <button
+                  className="wishlist-btn"
+                  onClick={(e) => { e.stopPropagation(); toggleWishlist(p) }}
+                >
+                  <svg width="16" height="16"
+                    fill={wishlist.includes(p._id) ? '#FF4B4B' : 'none'}
+                    stroke={wishlist.includes(p._id) ? '#FF4B4B' : '#fff'}
+                    strokeWidth="2" viewBox="0 0 24 24">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  </svg>
+                </button>
+                {p.originalPrice > 0 && (
+                  <span className="product-tag" style={{ background: '#FF4B4B' }}>
+                    -{Math.round((p.originalPrice - p.price) / p.originalPrice * 100)}%
+                  </span>
+                )}
               </div>
               <div className="home-product-name">{p.name}</div>
               <div style={{ padding: '0 10px 10px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <span className="home-product-price" style={{ padding: 0 }}>{p.price}</span>
-                <span className="original-price">{p.originalPrice}</span>
+                <span className="home-product-price" style={{ padding: 0 }}>
+                  ₹{p.price.toLocaleString('en-IN')}
+                </span>
+                {p.originalPrice > 0 && (
+                  <span className="original-price">
+                    ₹{p.originalPrice.toLocaleString('en-IN')}
+                  </span>
+                )}
               </div>
             </div>
           ))}
@@ -359,15 +592,7 @@ export default function Home() {
           </div>
         </div>
         <div className="product-grid">
-          {summerItems.map(p => (
-            <div key={p.id} className="home-product-card">
-              <div className="home-product-img">
-                <img src={p.img} alt={p.name} />
-              </div>
-              <div className="home-product-name">{p.name}</div>
-              <div className="home-product-price">{p.price}</div>
-            </div>
-          ))}
+          {summerItems.map(p => <HomeProductCard key={p._id} p={p} />)}
         </div>
 
       </div>
@@ -378,3 +603,4 @@ export default function Home() {
     </div>
   )
 }
+

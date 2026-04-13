@@ -23,7 +23,7 @@ export default function Login() {
   }
 
   try {
-    const res = await fetch('http://localhost:5000/api/auth/login', {
+    const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -84,7 +84,7 @@ export default function Login() {
           </div>
           {errors.password && <span style={styles.errMsg}>{errors.password}</span>}
 
-          <div style={styles.forgot}>Forgot password?</div>
+          <div style={styles.forgot} onClick={() => navigate('/forgot-password')}>Forgot password?</div>
 
           <button style={styles.btnPrimary} onClick={handleSubmit}>Login</button>
           <span style={styles.cancelLink} onClick={() => navigate('/')}>Cancel</span>
@@ -172,3 +172,4 @@ const styles = {
   signupText: { textAlign: 'center', fontSize: '13px', color: '#888' },
   link: { color: '#2563EB', fontWeight: '600', cursor: 'pointer' },
 }
+

@@ -11,7 +11,6 @@ export default function Categories() {
       id: 1,
       title: "Men's Fashion",
       desc: 'Shirts, Tees, Jeans, Kurtas & more',
-      count: '1,240 items',
       path: '/common/men',
       bg: 'linear-gradient(135deg, #1565C0, #42a5f5)',
       img: '/image/men/jeans/p5.jpg',
@@ -20,7 +19,6 @@ export default function Categories() {
       id: 2,
       title: "Women's Fashion",
       desc: 'Dresses, Kurtas, Sarees, Tops & more',
-      count: '2,340 items',
       path: '/common/women',
       bg: 'linear-gradient(135deg, #E91E8C, #f472b6)',
       img: '/image/women/dress/d13.jpg',
@@ -29,7 +27,6 @@ export default function Categories() {
       id: 3,
       title: 'Footwear',
       desc: 'Sneakers, Heels, Sports, Formals & more',
-      count: '980 items',
       path: '/common/footwear',
       bg: 'linear-gradient(135deg, #1b5e20, #388e3c)',
       img: '/image/footwear/men/sneakers/d2.jpg',
@@ -38,7 +35,6 @@ export default function Categories() {
       id: 4,
       title: 'Accessories',
       desc: 'Watches, Bags, Jewellery, Belts & more',
-      count: '760 items',
       path: '/common/accessories',
       bg: 'linear-gradient(135deg, #e65100, #f57c00)',
       img: '/image/accessories/men/watch/d3.jpg',
@@ -69,34 +65,6 @@ export default function Categories() {
     },
   ]
 
-  
-  const dealsOfDay = [
-    { id: 1, name: 'Formal Blazer', price: '₹1,999', originalPrice: '₹3,999', discount: '50%', rating: 4.7, img: '/image/men/suit/d1.jpg' },
-    { id: 2, name: 'Silk Saree', price: '₹2,499', originalPrice: '₹4,999', discount: '50%', rating: 4.6, img: '/image/women/saree/d1.jpg' },
-    { id: 3, name: 'Running Shoes', price: '₹1,499', originalPrice: '₹2,999', discount: '50%', rating: 4.5, img: '/image/footwear/men/sneakers/d4.jpg' },
-    { id: 4, name: 'Leather Watch', price: '₹1,999', originalPrice: '₹3,999', discount: '50%', rating: 4.8, img: '/image/accessories/men/watch/d3.jpg' },
-  ]
-
-  const newArrivals = [
-    { id: 1, name: 'Oversized Hoodie', price: '₹1,299', rating: 4.5, img: '/image/men/oversized/d1.jpg' },
-    { id: 2, name: 'Floral Midi Dress', price: '₹1,499', rating: 4.6, img: '/image/women/dress/d1.jpg' },
-    { id: 3, name: 'Chunky Sneakers', price: '₹2,199', rating: 4.7, img: '/image/footwear/women/sneakers/d1.jpg' },
-    { id: 4, name: 'Leather Tote Bag', price: '₹1,799', rating: 4.4, img: '/image/accessories/women/bags/d1.jpg' },
-  ]
-
-  const mostPopular = [
-    { id: 1, name: 'Classic White Tee', price: '₹899', likes: '2.4k', tag: 'Hot', tagColor: '#F5A623', img: '/image/men/t-shirt/t2.jpg' },
-    { id: 2, name: 'Boho Maxi Dress', price: '₹1,799', likes: '1.8k', tag: 'Trending', tagColor: '#E91E8C', img: '/image/women/dress/d3.jpg' },
-    { id: 3, name: 'Air Max Sneakers', price: '₹2,499', likes: '3.1k', tag: 'Popular', tagColor: '#00897B', img: '/image/footwear/men/sneakers/d2.jpg' },
-    { id: 4, name: 'Leather Watch', price: '₹1,999', likes: '3.2k', tag: 'New', tagColor: '#4A90D9', img: '/image/accessories/men/watch/d3.jpg' },
-  ]
-
-  const justForYou = [
-    { id: 1, name: 'Summer Kurta', price: '₹899', img: '/image/women/kurta/d2.jpg' },
-    { id: 2, name: 'Slim Fit Chinos', price: '₹1,199', img: '/image/men/jeans/p3.jpg' },
-    { id: 3, name: 'Canvas Sneakers', price: '₹1,499', img: '/image/footwear/men/sneakers/d3.jpg' },
-    { id: 4, name: 'Crossbody Bag', price: '₹1,299', img: '/image/accessories/women/bags/d2.jpg' },
-  ]
 
   return (
     <div className="page">

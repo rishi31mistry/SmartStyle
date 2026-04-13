@@ -5,7 +5,7 @@
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 20px 40px;
-  background-color: rgb(247, 224, 95);
+  background-color: white;
 }
 .topbar {
   display: flex;
@@ -301,7 +301,7 @@
   cursor: pointer;
   background: #f5f5f5;
   transition: transform 0.2s;
-  height: 280px;
+  height: 340px;
 }
 
 .home-cat-card:hover { transform: translateY(-3px); }
@@ -312,7 +312,7 @@
   gap: 2px;
 }
 
-.home-cat-img { height: 250px; overflow: hidden; background: #ddd; }
+.home-cat-img { height: 300px; overflow: hidden; background: #ddd; }
 .home-cat-img img { width: 100%; height: 100%; object-fit: cover; }
 
 .home-cat-label { padding: 8px 10px; font-size: 13px; font-weight: 600; color: #222; }
@@ -348,7 +348,7 @@
   border-radius: 12px;
   overflow: hidden;
   position: relative;
-  height: 160px;
+  height: 250px;
   background: #eee;
   cursor: pointer;
 }
@@ -384,7 +384,7 @@
   cursor: pointer;
 }
 
-.popular-img { height: 250px; overflow: hidden; background: #eee; }
+.popular-img { height: 420px; overflow: hidden; background: #eee; }
 .popular-img img { width: 100%; height: 100%; object-fit: cover; }
 
 .popular-meta {

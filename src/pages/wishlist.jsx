@@ -20,7 +20,7 @@ export default function Wishlist() {
   const fetchWishlist = async () => {
     try {
       const token = localStorage.getItem('token')
-      const res = await fetch('http://localhost:5000/api/wishlist', {
+      const res = await fetch('/api/wishlist', {
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
@@ -35,7 +35,7 @@ export default function Wishlist() {
   const handleRemove = async (productId) => {
     try {
       const token = localStorage.getItem('token')
-      await fetch(`http://localhost:5000/api/wishlist/remove/${productId}`, {
+      await fetch(`/api/wishlist/remove/${productId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -48,7 +48,7 @@ export default function Wishlist() {
   const handleAddToCart = async (item) => {
     try {
       const token = localStorage.getItem('token')
-      await fetch('http://localhost:5000/api/cart/add', {
+      await fetch('/api/cart/add', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
