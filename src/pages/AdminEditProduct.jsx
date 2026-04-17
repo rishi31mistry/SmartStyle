@@ -8,6 +8,7 @@ const tags = ['', 'New', 'Sale', 'Trending', 'Hot', 'Popular', 'Bestseller']
 export default function AdminEditProduct() {
   const navigate = useNavigate()
   const { id } = useParams()
+  const token = localStorage.getItem('token')
   const [form, setForm] = useState({
     name: '',
     brand: '',
@@ -28,7 +29,7 @@ export default function AdminEditProduct() {
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    fetch(`/api/products/${id}`)
+    fetch(`http://localhost:5000/api/products/${id}`)
       .then(r => r.json())
       .then(data => {
         setForm({
@@ -100,9 +101,12 @@ export default function AdminEditProduct() {
 
     try {
       setSaving(true)
-      const res = await fetch(`/api/products/${id}`, {
+      const res = await fetch(`http://localhost:5000/api/products/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
         body: JSON.stringify(payload)
       })
       const data = await res.json()
@@ -191,4 +195,3 @@ export default function AdminEditProduct() {
     </AdminLayout>
   )
 }
-

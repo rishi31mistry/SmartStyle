@@ -3,6 +3,37 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import Navbar from '../components/navbar'
 import '../styles/common.css'
 
+function formatInr(value) {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format(value || 0)
+}
+
+function loadRazorpayScript() {
+  if (window.Razorpay) {
+    return Promise.resolve(true)
+  }
+
+  return new Promise((resolve) => {
+    const existingScript = document.querySelector('script[data-razorpay-checkout="true"]')
+    if (existingScript) {
+      existingScript.addEventListener('load', () => resolve(true), { once: true })
+      existingScript.addEventListener('error', () => resolve(false), { once: true })
+      return
+    }
+
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.async = true
+    script.dataset.razorpayCheckout = 'true'
+    script.onload = () => resolve(true)
+    script.onerror = () => resolve(false)
+    document.body.appendChild(script)
+  })
+}
+
 export default function CheckoutPayment() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -10,25 +41,33 @@ export default function CheckoutPayment() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [cardInput, setCardInput] = useState({ name: '', number: '', expiry: '' })
-  const [upiInput, setUpiInput] = useState('')
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
 
   const state = location.state || {}
   const items = Array.isArray(state.items) ? state.items : []
 
   useEffect(() => {
     const token = localStorage.getItem('token')
-    if (!token) { navigate('/login'); return }
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
     fetch('/api/user/profile', {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .then(res => res.json())
-      .then(data => {
+      .then(async (res) => {
+        const data = await res.json()
+        if (!res.ok) {
+          throw new Error(data?.message || 'Unable to load profile')
+        }
+
         setUser(data)
         setLoading(false)
       })
-      .catch(err => {
-        console.log(err)
+      .catch((err) => {
+        setError(err.message || 'Unable to load profile')
         setLoading(false)
       })
   }, [navigate])
@@ -54,62 +93,127 @@ export default function CheckoutPayment() {
 
   const subtotal = items.reduce((sum, it) => sum + it.price * it.quantity, 0)
 
-  const placeOrder = async () => {
+  const handleCashOnDelivery = async () => {
     try {
       setSaving(true)
+      setError('')
+      setMessage('')
+
       const token = localStorage.getItem('token')
-      if (!token) { navigate('/login'); return }
+      const res = await fetch('/api/payment/cod', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ items })
+      })
 
-      if (method === 'card' && !user?.paymentCardLast4) {
-        const last4 = cardInput.number.replace(/\D/g, '').slice(-4)
-        if (!cardInput.name || !cardInput.number || !cardInput.expiry || !last4) {
-          alert('Please enter card holder name, card number, and expiry.')
-          return
-        }
-        const res = await fetch('/api/user/update', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            paymentCardName: cardInput.name,
-            paymentCardLast4: last4,
-            paymentCardExpiry: cardInput.expiry
-          })
-        })
-        const data = await res.json()
-        if (!res.ok) throw new Error(data?.message || 'Payment save failed')
-        setUser(data)
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data?.message || 'Unable to place COD order')
       }
 
-      if (method === 'upi' && !user?.paymentUpiId) {
-        if (!upiInput) {
-          alert('Please enter UPI ID.')
-          return
-        }
-        const res = await fetch('/api/user/update', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            paymentUpiId: upiInput
-          })
-        })
-        const data = await res.json()
-        if (!res.ok) throw new Error(data?.message || 'Payment save failed')
-        setUser(data)
-      }
-
-      alert('Order placed!')
+      setMessage('Cash on delivery order placed successfully.')
+      alert('Order placed successfully with Cash on Delivery.')
       navigate('/home')
     } catch (err) {
-      alert(err.message || 'Order failed')
+      setError(err.message || 'Unable to place COD order')
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleRazorpayPayment = async () => {
+    try {
+      setSaving(true)
+      setError('')
+      setMessage('')
+
+      const scriptLoaded = await loadRazorpayScript()
+      if (!scriptLoaded) {
+        throw new Error('Unable to load Razorpay checkout')
+      }
+
+      const token = localStorage.getItem('token')
+      const createOrderRes = await fetch('/api/payment/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ items })
+      })
+
+      const orderData = await createOrderRes.json()
+      if (!createOrderRes.ok) {
+        throw new Error(orderData?.message || 'Unable to start Razorpay payment')
+      }
+
+      const razorpay = new window.Razorpay({
+        key: orderData.key,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'SmartStyle',
+        description: 'SmartStyle order payment',
+        order_id: orderData.razorpayOrderId,
+        prefill: {
+          name: orderData.customer?.name || user?.name || '',
+          email: orderData.customer?.email || user?.email || '',
+          contact: orderData.customer?.contact || user?.phone || '',
+        },
+        theme: {
+          color: '#2563EB',
+        },
+        modal: {
+          ondismiss: () => {
+            setSaving(false)
+          },
+        },
+        handler: async (response) => {
+          try {
+            const verifyRes = await fetch('/api/payment/verify', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                internalOrderId: orderData.internalOrderId,
+                ...response,
+              })
+            })
+
+            const verifyData = await verifyRes.json()
+            if (!verifyRes.ok) {
+              throw new Error(verifyData?.message || 'Payment verification failed')
+            }
+
+            setMessage('Payment completed and verified successfully.')
+            alert('Payment successful. Your order has been placed.')
+            navigate('/home')
+          } catch (err) {
+            setError(err.message || 'Payment verification failed')
+          } finally {
+            setSaving(false)
+          }
+        }
+      })
+
+      razorpay.open()
+    } catch (err) {
+      setError(err.message || 'Unable to start payment')
+      setSaving(false)
+    }
+  }
+
+  const placeOrder = async () => {
+    if (method === 'cod') {
+      await handleCashOnDelivery()
+      return
+    }
+
+    await handleRazorpayPayment()
   }
 
   return (
@@ -133,85 +237,50 @@ export default function CheckoutPayment() {
               <input type="radio" name="pay" checked={method === 'cod'} onChange={() => setMethod('cod')} />
               Cash on Delivery
             </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', fontSize: '14px' }}>
-              <input type="radio" name="pay" checked={method === 'card'} onChange={() => setMethod('card')} />
-              Card Payment (Online)
-            </label>
             <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px' }}>
-              <input type="radio" name="pay" checked={method === 'upi'} onChange={() => setMethod('upi')} />
-              UPI (Online)
+              <input type="radio" name="pay" checked={method === 'razorpay'} onChange={() => setMethod('razorpay')} />
+              Online Payment via Razorpay
             </label>
+
             {loading && (
               <div style={{ marginTop: '10px', fontSize: '13px', color: '#888' }}>
                 Loading payment details...
               </div>
             )}
-            {!loading && method === 'card' && (
-              <div style={{ marginTop: '10px', fontSize: '13px', color: '#555' }}>
-                {user?.paymentCardLast4 ? (
-                  <div>
-                    <div>Card: **** **** **** {user.paymentCardLast4}</div>
-                    {user.paymentCardExpiry && <div>Expiry: {user.paymentCardExpiry}</div>}
-                    {user.paymentCardName && <div>Name: {user.paymentCardName}</div>}
-                  </div>
-                ) : (
-                  <div>
-                    <div style={{ marginBottom: '8px' }}>No saved card. Please add details below.</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
-                      <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        Card Holder Name
-                        <input
-                          type="text"
-                          value={cardInput.name}
-                          onChange={(e) => setCardInput({ ...cardInput, name: e.target.value })}
-                          style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
-                        />
-                      </label>
-                      <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        Card Number
-                        <input
-                          type="text"
-                          value={cardInput.number}
-                          onChange={(e) => setCardInput({ ...cardInput, number: e.target.value })}
-                          style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
-                        />
-                      </label>
-                      <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        Expiry (MM/YY)
-                        <input
-                          type="text"
-                          value={cardInput.expiry}
-                          onChange={(e) => setCardInput({ ...cardInput, expiry: e.target.value })}
-                          style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
-                        />
-                      </label>
-                    </div>
-                  </div>
-                )}
+
+            {!loading && method === 'cod' && (
+              <div style={{ marginTop: '12px', fontSize: '13px', color: '#555', lineHeight: 1.6 }}>
+                Pay when your order is delivered. Best if you want a simple offline option.
               </div>
             )}
-            {!loading && method === 'upi' && (
-              <div style={{ marginTop: '10px', fontSize: '13px', color: '#555' }}>
-                {user?.paymentUpiId ? (
-                  <div>UPI: {user.paymentUpiId}</div>
-                ) : (
-                  <div>
-                    <div style={{ marginBottom: '8px' }}>No saved UPI. Please add UPI ID.</div>
-                    <input
-                      type="text"
-                      value={upiInput}
-                      onChange={(e) => setUpiInput(e.target.value)}
-                      style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb', width: '100%' }}
-                    />
-                  </div>
-                )}
+
+            {!loading && method === 'razorpay' && (
+              <div style={{ marginTop: '12px', fontSize: '13px', color: '#555', lineHeight: 1.7 }}>
+                Razorpay will open a secure payment popup where customers can choose UPI, Cards, Wallets, Netbanking, and more.
+                <div style={{ marginTop: '8px', color: '#666' }}>
+                  {user?.name ? `Paying as ${user.name}` : 'Your profile details will be used to prefill checkout where possible.'}
+                </div>
               </div>
             )}
+
+            {message && (
+              <div style={{ marginTop: '14px', padding: '10px 12px', borderRadius: '10px', background: '#ecfdf5', color: '#166534', fontSize: '13px' }}>
+                {message}
+              </div>
+            )}
+
+            {error && (
+              <div style={{ marginTop: '14px', padding: '10px 12px', borderRadius: '10px', background: '#fef2f2', color: '#b91c1c', fontSize: '13px' }}>
+                {error}
+              </div>
+            )}
+
             <button
               style={{ marginTop: '16px', padding: '12px 16px', borderRadius: '12px', border: 'none', background: '#2563EB', color: '#fff', fontWeight: '600', cursor: 'pointer' }}
               onClick={placeOrder}
+              disabled={saving || loading}
             >
-              {saving ? 'Placing...' : 'Place Order'}
+              {saving ? 'Processing...' : method === 'cod' ? 'Place COD Order' : 'Pay with Razorpay'}
             </button>
           </div>
 
@@ -219,23 +288,22 @@ export default function CheckoutPayment() {
             <div style={{ fontSize: '16px', fontWeight: '700', marginBottom: '12px' }}>Order Summary</div>
             {items.map(it => (
               <div key={`${it.productId || it._id}-${it.size}`} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#555' }}>
-                <span>{it.name} {it.size ? `(${it.size})` : ''} × {it.quantity}</span>
-                <span>₹{it.price * it.quantity}</span>
+                <span>{it.name} {it.size ? `(${it.size})` : ''} x {it.quantity}</span>
+                <span>{formatInr(it.price * it.quantity)}</span>
               </div>
             ))}
             <div style={{ height: '1px', background: '#f3f4f6', margin: '12px 0' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: '700' }}>
               <span>Total</span>
-              <span>₹{subtotal}</span>
+              <span>{formatInr(subtotal)}</span>
             </div>
           </div>
         </div>
       </div>
 
       <footer className="footer">
-        ® <span className="footer-brand">SMARTSTYLE</span> 2025. All Rights Reserved.
+        <span className="footer-brand">SMARTSTYLE</span> 2025. All Rights Reserved.
       </footer>
     </div>
   )
 }
-

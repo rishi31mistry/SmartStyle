@@ -19,11 +19,14 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/admin', require('./routes/admin'));
 app.use('/api/user', require('./routes/user'));
 app.use('/api/wishlist', require('./routes/wishlist'));
 app.use('/api/products', require('./routes/product'));
 app.use('/api/moodyproducts', require('./routes/moodyproduct'));
 app.use('/api/cart', require('./routes/cart'));
+app.use('/api/payment', require('./routes/payment'));
+app.use('/api/notifications', require('./routes/notifications'));
 
 
 // Connect to MongoDB and start server

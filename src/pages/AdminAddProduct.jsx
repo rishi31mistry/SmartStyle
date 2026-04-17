@@ -7,6 +7,7 @@ const tags = ['', 'New', 'Sale', 'Trending', 'Hot', 'Popular', 'Bestseller']
 
 export default function AdminAddProduct() {
   const navigate = useNavigate()
+  const token = localStorage.getItem('token')
   const [form, setForm] = useState({
     name: '',
     brand: '',
@@ -72,9 +73,12 @@ export default function AdminAddProduct() {
 
     try {
       setLoading(true)
-      const res = await fetch('/api/products/add', {
+      const res = await fetch('http://localhost:5000/api/products/add', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
         body: JSON.stringify(payload)
       })
       const data = await res.json()
@@ -229,4 +233,3 @@ export default function AdminAddProduct() {
     </AdminLayout>
   )
 }
-

@@ -6,6 +6,8 @@ import Onboarding from './pages/onboarding'
 import Home from './pages/home'
 import Categories from './pages/categories'
 import Account from './pages/account'
+import OrderHistory from './pages/orderHistory'
+import NotificationsPage from './pages/notifications'
 import Wishlist from './pages/wishlist'
 import Cart from './pages/cart'
 
@@ -116,6 +118,8 @@ function App() {
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/home" element={<Home />} />
         <Route path="/account" element={<Account />} />
+        <Route path="/account/orders" element={<OrderHistory />} />
+        <Route path="/account/notifications" element={<NotificationsPage />} />
         <Route path="/categories" element={<Categories />} />
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/cart" element={<Cart />} />

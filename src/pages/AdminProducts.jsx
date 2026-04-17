@@ -8,6 +8,7 @@ function formatPrice(value) {
 
 export default function AdminProducts() {
   const navigate = useNavigate()
+  const token = localStorage.getItem('token')
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -52,8 +53,8 @@ export default function AdminProducts() {
 
     try {
       const url = params.toString()
-        ? `/api/products?${params.toString()}`
-        : '/api/products'
+        ? `http://localhost:5000/api/products?${params.toString()}`
+        : 'http://localhost:5000/api/products'
 
       const res = await fetch(url)
       const data = await res.json()
@@ -121,8 +122,11 @@ export default function AdminProducts() {
 
     try {
       setActionError('')
-      const res = await fetch(`/api/products/${productId}`, {
-        method: 'DELETE'
+      const res = await fetch(`http://localhost:5000/api/products/${productId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       })
       const data = await res.json()
       if (!res.ok) {
@@ -155,7 +159,7 @@ export default function AdminProducts() {
         <div className="admin-panel-header admin-panel-header-stack">
           <div>
             <div className="admin-panel-title">Catalog Control</div>
-            <div className="admin-panel-subtitle">Browse current products and prepare this screen for CRUD actions.</div>
+            <div className="admin-panel-subtitle">Browse current products .</div>
           </div>
           <div className="admin-toolbar">
             <input
@@ -312,4 +316,3 @@ export default function AdminProducts() {
     </AdminLayout>
   )
 }
-

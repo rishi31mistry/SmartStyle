@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
-const BASE = '/api/auth'
+const BASE = 'http://localhost:5000/api/auth'
 
 export default function AdminManager() {
   const [admins, setAdmins]     = useState([])
@@ -9,23 +9,23 @@ export default function AdminManager() {
   const [message, setMessage]   = useState({ text: '', type: '' })
 
   const token = localStorage.getItem('token')
-  const headers = {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`
-  }
-
   // Load all current admins
-  const fetchAdmins = async () => {
+  const fetchAdmins = useCallback(async () => {
     try {
-      const res  = await fetch(`${BASE}/admins`, { headers })
+      const res  = await fetch(`${BASE}/admins`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      })
       const data = await res.json()
       setAdmins(data)
     } catch {
       setAdmins([])
     }
-  }
+  }, [token])
 
-  useEffect(() => { fetchAdmins() }, [])
+  useEffect(() => { fetchAdmins() }, [fetchAdmins])
 
   const showMsg = (text, type = 'success') => {
     setMessage({ text, type })
@@ -37,7 +37,11 @@ export default function AdminManager() {
     setLoading(true)
     try {
       const res  = await fetch(`${BASE}/make-admin`, {
-        method: 'POST', headers,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
         body: JSON.stringify({ email: email.trim() })
       })
       const data = await res.json()
@@ -58,7 +62,11 @@ export default function AdminManager() {
     if (!window.confirm(`Remove admin access from ${targetEmail}?`)) return
     try {
       const res  = await fetch(`${BASE}/remove-admin`, {
-        method: 'POST', headers,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
         body: JSON.stringify({ email: targetEmail })
       })
       const data = await res.json()

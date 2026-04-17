@@ -6,6 +6,7 @@ import '../styles/account.css'
 
 function AccItem({ item, onClick }) {
   const [hovered, setHovered] = useState(false)
+
   return (
     <div
       className="acc-item"
@@ -28,14 +29,12 @@ export default function Account() {
   const navigate = useNavigate()
   const [logoutHovered, setLogoutHovered] = useState(false)
   const [user, setUser] = useState(null)
+  const [notificationCount, setNotificationCount] = useState(0)
   const [showPersonalForm, setShowPersonalForm] = useState(false)
   const [showAddressForm, setShowAddressForm] = useState(false)
-  const [showPaymentForm, setShowPaymentForm] = useState(false)
   const [showPrivacyForm, setShowPrivacyForm] = useState(false)
-  const [paymentMode, setPaymentMode] = useState('card')
   const [form, setForm] = useState({ name: '', email: '', phone: '' })
   const [addressForm, setAddressForm] = useState({ street: '', city: '', state: '', pincode: '' })
-  const [paymentForm, setPaymentForm] = useState({ cardName: '', cardNumber: '', cardExpiry: '', upiId: '' })
   const [privacyForm, setPrivacyForm] = useState({ twoFactor: false, loginAlerts: true, sessionTimeout: 30 })
   const [passwordForm, setPasswordForm] = useState({ current: '', next: '', confirm: '' })
   const [saving, setSaving] = useState(false)
@@ -47,51 +46,51 @@ export default function Account() {
   })
 
   useEffect(() => {
-  const token = localStorage.getItem('token')
-  if (!token) {
-    navigate('/login')
-    return
-  }
+    const token = localStorage.getItem('token')
+    if (!token) {
+      navigate('/login')
+      return
+    }
 
-  fetch('/api/user/profile', {
-    headers: { Authorization: `Bearer ${token}` }
-  })
-    .then(res => res.json())
-    .then(data => {
-      setUser(data)
-      setForm({
-        name: data.name || '',
-        email: data.email || '',
-        phone: data.phone || ''
-      })
-      setAddressForm({
-        street: data.addressStreet || '',
-        city: data.addressCity || '',
-        state: data.addressState || '',
-        pincode: data.addressPincode || ''
-      })
-      setPaymentForm({
-        cardName: data.paymentCardName || '',
-        cardNumber: data.paymentCardLast4 ? `**** **** **** ${data.paymentCardLast4}` : '',
-        cardExpiry: data.paymentCardExpiry || '',
-        upiId: data.paymentUpiId || ''
-      })
-      setPrivacyForm({
-        twoFactor: !!data.securityTwoFactor,
-        loginAlerts: data.securityLoginAlerts !== undefined ? !!data.securityLoginAlerts : true,
-        sessionTimeout: data.securitySessionTimeout || 30
-      })
-      if (data.paymentUpiId && !data.paymentCardLast4) {
-        setPaymentMode('upi')
-      }
-      setStats({
-        orders: data.orders?.length || 0,
-        wishlist: data.wishlist?.length || 0,
-        reviews: 0
-      })
+    fetch('/api/user/profile', {
+      headers: { Authorization: `Bearer ${token}` }
     })
-    .catch(err => console.log(err))
-}, [navigate])
+      .then(res => res.json())
+      .then(data => {
+        setUser(data)
+        setForm({
+          name: data.name || '',
+          email: data.email || '',
+          phone: data.phone || ''
+        })
+        setAddressForm({
+          street: data.addressStreet || '',
+          city: data.addressCity || '',
+          state: data.addressState || '',
+          pincode: data.addressPincode || ''
+        })
+        setPrivacyForm({
+          twoFactor: !!data.securityTwoFactor,
+          loginAlerts: data.securityLoginAlerts !== undefined ? !!data.securityLoginAlerts : true,
+          sessionTimeout: data.securitySessionTimeout || 30
+        })
+        setStats({
+          orders: data.orders?.length || 0,
+          wishlist: data.wishlist?.length || 0,
+          reviews: 0
+        })
+      })
+      .catch(err => console.log(err))
+
+    fetch('/api/notifications', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        setNotificationCount(Number(data?.unreadCount || 0))
+      })
+      .catch(err => console.log(err))
+  }, [navigate])
 
   const handleLogout = () => {
     localStorage.removeItem('token')
@@ -160,47 +159,6 @@ export default function Account() {
     }
   }
 
-  const handleSavePayment = async (e) => {
-    e.preventDefault()
-    setSaving(true)
-    setSaveMsg('')
-    try {
-      const token = localStorage.getItem('token')
-      const last4 = paymentForm.cardNumber.replace(/\D/g, '').slice(-4)
-      const res = await fetch('/api/user/update', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(
-          paymentMode === 'card'
-            ? {
-                paymentCardName: paymentForm.cardName,
-                paymentCardLast4: last4,
-                paymentCardExpiry: paymentForm.cardExpiry
-              }
-            : {
-                paymentUpiId: paymentForm.upiId
-              }
-        )
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data?.message || 'Update failed')
-      setUser(data)
-      setSaveMsg('Payment methods updated successfully.')
-      setShowPaymentForm(false)
-      setPaymentForm(prev => ({
-        ...prev,
-        cardNumber: paymentMode === 'card' && last4 ? `**** **** **** ${last4}` : prev.cardNumber
-      }))
-    } catch (err) {
-      setSaveMsg(err.message || 'Update failed')
-    } finally {
-      setSaving(false)
-    }
-  }
-
   const handleSavePrivacy = async (e) => {
     e.preventDefault()
     setSaving(true)
@@ -245,6 +203,7 @@ export default function Account() {
       if (passwordForm.next !== passwordForm.confirm) {
         throw new Error('New password and confirm password do not match')
       }
+
       const token = localStorage.getItem('token')
       const res = await fetch('/api/user/password', {
         method: 'PUT',
@@ -271,6 +230,7 @@ export default function Account() {
   const handleDeleteAccount = async () => {
     const ok = window.confirm('Are you sure you want to delete your account? This cannot be undone.')
     if (!ok) return
+
     try {
       const token = localStorage.getItem('token')
       const res = await fetch('/api/user/delete', {
@@ -291,26 +251,23 @@ export default function Account() {
       title: 'My Account',
       items: [
         { icon: '👤', title: 'Personal Information', sub: 'Name, email, phone', onClick: () => setShowPersonalForm(v => !v) },
-        { icon: '📍', title: 'Saved Addresses', sub: 'Home, work & more', onClick: () => setShowAddressForm(v => !v) },
-        { icon: '💳', title: 'Payment Methods', sub: 'Cards, UPI, wallets', onClick: () => setShowPaymentForm(v => !v) },
+        { icon: '📍', title: 'Saved Addresses', sub: 'Home, work & more', onClick: () => setShowAddressForm(v => !v) }
       ]
     },
     {
       title: 'My Orders',
       items: [
-        { icon: '🛍️', title: 'Order History', sub: 'Track & manage orders' },
-        { icon: '❤️', title: 'Wishlist', sub: `${stats.wishlist} saved items`, onClick: () => navigate('/wishlist') },
-        { icon: '⭐', title: 'My Reviews', sub: `${stats.reviews} reviews given` },
+        { icon: '🛍️', title: 'Order History', sub: 'Track & manage orders', onClick: () => navigate('/account/orders') },
+        { icon: '❤️', title: 'Wishlist', sub: `${stats.wishlist} saved items`, onClick: () => navigate('/wishlist') }
       ]
     },
     {
       title: 'Settings',
       items: [
-        { icon: '🔔', title: 'Notifications', sub: 'Manage alerts & updates' },
-        { icon: '🔒', title: 'Privacy & Security', sub: 'Password, data settings', onClick: () => setShowPrivacyForm(v => !v) },
-        { icon: '⚙️', title: 'App Settings', sub: 'Language, theme' },
+        { icon: '🔔', title: 'Notifications', sub: notificationCount > 0 ? `${notificationCount} new alerts` : 'Order updates & sale alerts', onClick: () => navigate('/account/notifications') },
+        { icon: '🔒', title: 'Privacy & Security', sub: 'Password, data settings', onClick: () => setShowPrivacyForm(v => !v) }
       ]
-    },
+    }
   ]
 
   return (
@@ -318,8 +275,6 @@ export default function Account() {
       <Navbar active="account" />
 
       <div className="wrapper">
-
-        {/* Profile Card */}
         <div className="profile-card">
           <div className="profile-left">
             <div className="profile-avatar">
@@ -388,7 +343,6 @@ export default function Account() {
           </div>
         </div>
 
-        {/* Personal Information Form */}
         {showPersonalForm && (
           <form onSubmit={handleSave} style={{ margin: '20px 0', background: '#fff', padding: '18px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
             <div style={{ fontSize: '16px', fontWeight: '700', marginBottom: '14px' }}>Personal Information</div>
@@ -430,7 +384,6 @@ export default function Account() {
           </form>
         )}
 
-        {/* Address Form */}
         {showAddressForm && (
           <form onSubmit={handleSaveAddress} style={{ margin: '20px 0', background: '#fff', padding: '18px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
             <div style={{ fontSize: '16px', fontWeight: '700', marginBottom: '14px' }}>Saved Address</div>
@@ -481,61 +434,6 @@ export default function Account() {
           </form>
         )}
 
-        {/* Payment Methods Form */}
-        {showPaymentForm && (
-          <form onSubmit={handleSavePayment} style={{ margin: '20px 0', background: '#fff', padding: '18px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
-            <div style={{ fontSize: '16px', fontWeight: '700', marginBottom: '14px' }}>Payment Methods</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#555' }}>
-                Card Holder Name
-                <input
-                  type="text"
-                  value={paymentForm.cardName}
-                  onChange={(e) => setPaymentForm({ ...paymentForm, cardName: e.target.value })}
-                  style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
-                />
-              </label>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#555' }}>
-                Card Number
-                <input
-                  type="text"
-                  placeholder="**** **** **** 1234"
-                  value={paymentForm.cardNumber}
-                  onChange={(e) => setPaymentForm({ ...paymentForm, cardNumber: e.target.value })}
-                  style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
-                />
-              </label>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#555' }}>
-                Expiry (MM/YY)
-                <input
-                  type="text"
-                  placeholder="MM/YY"
-                  value={paymentForm.cardExpiry}
-                  onChange={(e) => setPaymentForm({ ...paymentForm, cardExpiry: e.target.value })}
-                  style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
-                />
-              </label>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: '#555' }}>
-                UPI ID
-                <input
-                  type="text"
-                  placeholder="name@bank"
-                  value={paymentForm.upiId}
-                  onChange={(e) => setPaymentForm({ ...paymentForm, upiId: e.target.value })}
-                  style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
-                />
-              </label>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '14px' }}>
-              <button type="submit" disabled={saving} style={{ padding: '10px 16px', borderRadius: '10px', border: 'none', background: '#2563EB', color: '#fff', fontWeight: '600', cursor: 'pointer' }}>
-                {saving ? 'Saving...' : 'Save Payment'}
-              </button>
-              {saveMsg && <span style={{ fontSize: '13px', color: saveMsg.includes('success') ? '#16a34a' : '#dc2626' }}>{saveMsg}</span>}
-            </div>
-          </form>
-        )}
-
-        {/* Privacy & Security Form */}
         {showPrivacyForm && (
           <form onSubmit={handleSavePrivacy} style={{ margin: '20px 0', background: '#fff', padding: '18px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.06)' }}>
             <div style={{ fontSize: '16px', fontWeight: '700', marginBottom: '14px' }}>Privacy & Security</div>
@@ -620,7 +518,6 @@ export default function Account() {
           </form>
         )}
 
-        {/* Sections */}
         <div className="acc-sections">
           {accSections.map(section => (
             <div key={section.title} className="acc-section">
@@ -632,7 +529,6 @@ export default function Account() {
           ))}
         </div>
 
-        {/* Logout */}
         <button
           className="logout-btn"
           style={{ background: logoutHovered ? '#ffe0e0' : '#FFF0F0' }}
@@ -642,13 +538,11 @@ export default function Account() {
         >
           🚪 Log Out
         </button>
-
       </div>
 
       <footer className="footer">
-        ® <span className="footer-brand">SMARTSTYLE</span> 2025. All Rights Reserved.
+        <span className="footer-brand">SMARTSTYLE</span> 2025. All Rights Reserved.
       </footer>
     </div>
   )
 }
-

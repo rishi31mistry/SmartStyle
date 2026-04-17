@@ -2,39 +2,63 @@ import { useEffect, useState } from 'react'
 import AdminLayout from '../components/AdminLayout'
 
 function formatPrice(value) {
-  return `₹${Math.round(value || 0).toLocaleString('en-IN')}`
-}
-
-function getSoldUnits(product) {
-  if (typeof product?.sold === 'number') return product.sold
-
-  const ratingScore = Math.round((product?.rating || 0) * 18)
-  const tagBoost = product?.tag === 'Popular' || product?.tag === 'Bestseller'
-    ? 35
-    : product?.tag === 'Trending'
-      ? 22
-      : product?.tag === 'Sale'
-        ? 16
-        : product?.tag === 'New'
-          ? 10
-          : 0
-
-  return ratingScore + tagBoost
+  return `Rs ${Math.round(value || 0).toLocaleString('en-IN')}`
 }
 
 export default function AdminDashboard() {
+  const token = localStorage.getItem('token')
   const [products, setProducts] = useState([])
+  const [analytics, setAnalytics] = useState({
+    totalOrders: 0,
+    totalUnitsSold: 0,
+    topSoldProducts: [],
+    soldByCategory: [],
+  })
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    fetch('/api/products')
-      .then(r => r.json())
-      .then(data => {
-        setProducts(Array.isArray(data) ? data : [])
-        setLoading(false)
+    let active = true
+
+    Promise.all([
+      fetch('http://localhost:5000/api/products').then(async (res) => {
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.message || 'Unable to load products')
+        return Array.isArray(data) ? data : []
+      }),
+      fetch('http://localhost:5000/api/admin/dashboard', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }).then(async (res) => {
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.message || 'Unable to load dashboard analytics')
+        return data
       })
-      .catch(() => setLoading(false))
-  }, [])
+    ])
+      .then(([productData, analyticsData]) => {
+        if (!active) return
+        setProducts(productData)
+        setAnalytics({
+          totalOrders: Number(analyticsData?.totalOrders || 0),
+          totalUnitsSold: Number(analyticsData?.totalUnitsSold || 0),
+          topSoldProducts: Array.isArray(analyticsData?.topSoldProducts) ? analyticsData.topSoldProducts : [],
+          soldByCategory: Array.isArray(analyticsData?.soldByCategory) ? analyticsData.soldByCategory : [],
+        })
+        setError('')
+      })
+      .catch((err) => {
+        if (!active) return
+        setError(err.message || 'Unable to load dashboard')
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [token])
 
   const totalProducts = products.length
   const averagePrice = totalProducts
@@ -42,7 +66,6 @@ export default function AdminDashboard() {
     : 0
   const saleProducts = products.filter(p => p.tag === 'Sale').length
   const newProducts = products.filter(p => p.tag === 'New').length
-  const totalUnitsSold = products.reduce((sum, p) => sum + getSoldUnits(p), 0)
 
   const genderStats = ['Men', 'Women', 'Footwear', 'Accessories'].map(label => ({
     label,
@@ -72,30 +95,21 @@ export default function AdminDashboard() {
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
     .slice(0, 6)
 
-  const topSoldProducts = [...products]
-    .map(product => ({ ...product, soldUnits: getSoldUnits(product) }))
-    .sort((a, b) => b.soldUnits - a.soldUnits)
-    .slice(0, 5)
-
-  const soldByCategory = Object.entries(
-    products.reduce((acc, product) => {
-      const key = Array.isArray(product.category) ? product.category[0] : product.category || 'Other'
-      acc[key] = (acc[key] || 0) + getSoldUnits(product)
-      return acc
-    }, {})
-  )
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-
   const maxGenderValue = Math.max(...genderStats.map(item => item.value), 1)
   const maxCategoryValue = Math.max(...topCategories.map(item => item[1]), 1)
-  const maxSoldCategoryValue = Math.max(...soldByCategory.map(item => item[1]), 1)
+  const maxSoldCategoryValue = Math.max(...analytics.soldByCategory.map(item => item[1]), 1)
 
   return (
     <AdminLayout
       title="Dashboard"
       subtitle="A live overview of products, category mix and store health."
     >
+      {error && (
+        <div className="admin-form-feedback admin-form-feedback-error" style={{ marginBottom: '14px' }}>
+          {error}
+        </div>
+      )}
+
       <div className="admin-grid-cards">
         <div className="admin-stat-card admin-stat-card-blue">
           <div className="admin-stat-label">Total Products</div>
@@ -119,8 +133,8 @@ export default function AdminDashboard() {
         </div>
         <div className="admin-stat-card admin-stat-card-blue">
           <div className="admin-stat-label">Units Sold</div>
-          <div className="admin-stat-value">{loading ? '--' : totalUnitsSold}</div>
-          <div className="admin-stat-note">Uses `sold` data when available and fallback estimates otherwise</div>
+          <div className="admin-stat-value">{loading ? '--' : analytics.totalUnitsSold}</div>
+          <div className="admin-stat-note">Calculated from paid orders only</div>
         </div>
       </div>
 
@@ -199,17 +213,20 @@ export default function AdminDashboard() {
           <div className="admin-panel-header">
             <div>
               <div className="admin-panel-title">Product Sold Analysis</div>
-              <div className="admin-panel-subtitle">Top selling products from sold data or current live estimate</div>
+              <div className="admin-panel-subtitle">Top selling products from paid orders</div>
             </div>
           </div>
           <div className="admin-mini-list">
-            {topSoldProducts.map((product, index) => (
-              <div key={product._id} className="admin-mini-row">
+            {analytics.topSoldProducts.map((product, index) => (
+              <div key={product.productId || `${product.name}-${index}`} className="admin-mini-row">
                 <span className="admin-rank">{String(index + 1).padStart(2, '0')}</span>
                 <span className="admin-mini-name">{product.name}</span>
                 <strong>{product.soldUnits} sold</strong>
               </div>
             ))}
+            {!loading && analytics.topSoldProducts.length === 0 && (
+              <div className="admin-form-feedback">No paid orders yet.</div>
+            )}
           </div>
         </section>
       </div>
@@ -218,11 +235,14 @@ export default function AdminDashboard() {
         <div className="admin-panel-header">
           <div>
             <div className="admin-panel-title">Sold Units By Category</div>
-            <div className="admin-panel-subtitle">Category demand analysis based on product sold counts</div>
+            <div className="admin-panel-subtitle">Category demand analysis from paid orders</div>
+          </div>
+          <div className="admin-inline-pill">
+            {loading ? '--' : `${analytics.totalOrders} paid orders`}
           </div>
         </div>
         <div className="admin-bar-list">
-          {soldByCategory.map(([label, value]) => (
+          {analytics.soldByCategory.map(([label, value]) => (
             <div key={label} className="admin-bar-row">
               <div className="admin-bar-meta">
                 <span>{label}</span>
@@ -236,6 +256,9 @@ export default function AdminDashboard() {
               </div>
             </div>
           ))}
+          {!loading && analytics.soldByCategory.length === 0 && (
+            <div className="admin-form-feedback">No category sales data yet.</div>
+          )}
         </div>
       </section>
 
@@ -274,4 +297,3 @@ export default function AdminDashboard() {
     </AdminLayout>
   )
 }
-
