@@ -1,8 +1,16 @@
 {
-  "rewrites": [
+  "version": 2,
+  "routes": [
     {
-      "source": "/((?!api/|assets/|uploads/|image/|vite\\.svg).*)",
-      "destination": "/index.html"
+      "src": "/api/(.*)",
+      "dest": "/api/[...all].js"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
