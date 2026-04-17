@@ -3,6 +3,35 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import Navbar from '../components/navbar'
 import '../styles/common.css'
 
+async function readApiResponse(res) {
+  const contentType = res.headers.get('content-type') || ''
+  const isJson = contentType.includes('application/json')
+  const payload = isJson ? await res.json() : await res.text()
+
+  return {
+    ok: res.ok,
+    status: res.status,
+    data: isJson ? payload : null,
+    text: isJson ? '' : payload,
+  }
+}
+
+function getResponseErrorMessage(response, fallbackMessage) {
+  if (response.data?.message) {
+    return response.data.message
+  }
+
+  if (response.text) {
+    if (response.text.includes('<!DOCTYPE')) {
+      return 'The payment API returned an HTML page instead of JSON. Make sure the backend server is running on port 5000 and then retry.'
+    }
+
+    return response.text
+  }
+
+  return fallbackMessage
+}
+
 function formatInr(value) {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -58,12 +87,12 @@ export default function CheckoutPayment() {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(async (res) => {
-        const data = await res.json()
-        if (!res.ok) {
-          throw new Error(data?.message || 'Unable to load profile')
+        const response = await readApiResponse(res)
+        if (!response.ok) {
+          throw new Error(getResponseErrorMessage(response, 'Unable to load profile'))
         }
 
-        setUser(data)
+        setUser(response.data)
         setLoading(false)
       })
       .catch((err) => {
@@ -109,9 +138,9 @@ export default function CheckoutPayment() {
         body: JSON.stringify({ items })
       })
 
-      const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data?.message || 'Unable to place COD order')
+      const response = await readApiResponse(res)
+      if (!response.ok) {
+        throw new Error(getResponseErrorMessage(response, 'Unable to place COD order'))
       }
 
       setMessage('Cash on delivery order placed successfully.')
@@ -145,10 +174,11 @@ export default function CheckoutPayment() {
         body: JSON.stringify({ items })
       })
 
-      const orderData = await createOrderRes.json()
-      if (!createOrderRes.ok) {
-        throw new Error(orderData?.message || 'Unable to start Razorpay payment')
+      const createOrderResponse = await readApiResponse(createOrderRes)
+      if (!createOrderResponse.ok) {
+        throw new Error(getResponseErrorMessage(createOrderResponse, 'Unable to start Razorpay payment'))
       }
+      const orderData = createOrderResponse.data
 
       const razorpay = new window.Razorpay({
         key: orderData.key,
@@ -184,9 +214,9 @@ export default function CheckoutPayment() {
               })
             })
 
-            const verifyData = await verifyRes.json()
-            if (!verifyRes.ok) {
-              throw new Error(verifyData?.message || 'Payment verification failed')
+            const verifyResponse = await readApiResponse(verifyRes)
+            if (!verifyResponse.ok) {
+              throw new Error(getResponseErrorMessage(verifyResponse, 'Payment verification failed'))
             }
 
             setMessage('Payment completed and verified successfully.')
